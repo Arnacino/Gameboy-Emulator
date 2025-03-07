@@ -1,8 +1,14 @@
 #include <stdint.h>
+#include "Registers.h"
 
-class instructions
+class Instructions
 {
+
+private:
+    Registers *registers;
+
 public:
+    Instructions(Registers *Registers);
     void halt();
     void stop();
     void di(); //disable interrupts
