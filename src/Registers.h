@@ -1,10 +1,10 @@
 #include <stdint.h>
 
 enum RegistersFlags{
-    ZERO_FLAG = (1<<7),
-    SUBTRACTION_FLAG = (1<<6),
-    HALF_CARRY_FLAG = (1<<5),
-    CARRY_FLAG = (1<<4)
+    ZERO_FLAG = (1<<7), //Z flag
+    SUBTRACTION_FLAG = (1<<6), //N flag
+    HALF_CARRY_FLAG = (1<<5), //H flag
+    CARRY_FLAG = (1<<4) //C flag
 };
 
 class Registers {
