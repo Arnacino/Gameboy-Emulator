@@ -6,10 +6,10 @@ bool Registers::isFlagSet(uint8_t flag) {
 }
 
 //aggiunge o rimuove una flag in base al valore
-void Registers::setFlag(uint8_t flag){
-    if(isFlagSet(flag)){
-        f = ~flag;
+void Registers::setFlag(uint8_t flag, bool value){
+    if(value){
+        this->f = flag;
     }else{
-        f = flag;
+        this->f = ~flag;
     }
 }

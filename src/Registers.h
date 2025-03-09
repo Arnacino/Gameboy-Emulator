@@ -52,6 +52,6 @@ class Registers {
         };
     };
 
-    void setFlag(uint8_t flag);
+    void setFlag(uint8_t flag, bool value);
     bool isFlagSet(uint8_t flag);
 };
