@@ -20,8 +20,8 @@ public:
     void jpIm(); //jumps to immediate (16 bit immediate)
     void jpHl(); //jumps to HL
     void jpCIm(); //jumps depending on the condition
-    void jrE(); //jumps relative to E
-    void jrCE(); //jumps depending on the condition, jumps relative to e
+    void jrIm(); //jumps relative to E
+    void jrCIm(bool condition); //jumps depending on the condition, jumps relative to e
     void callIm(); //calls the function at adress immediate
     void callCIm(); //same as above but conditional
     void ret(); //return from function

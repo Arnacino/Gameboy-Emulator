@@ -25,6 +25,7 @@ uint8_t Instructions::readNext8Bit(){
 }
 
 void Instructions::execute(uint8_t instruction){
+
     switch (instruction){
     
     case 0x00: //NOP
@@ -122,49 +123,103 @@ void Instructions::execute(uint8_t instruction){
         rla();
         break;
 
-    //FINO A QUA
-
-    case 0x18: // INC DE
-        incR16(&(registers->de));
+    case 0x18: // JR n (non sono per niente sicuro di questa. Da capire meglio)
+        jrIm();
         break;
 
-    case 0x19: // INC DE
-        incR16(&(registers->de));
+    case 0x19: // ADD HL, DE
+        addHlR(&(registers->de));
         break;
 
-    case 0x1A: // INC DE
-        incR16(&(registers->de));
+    case 0x1A: // LD A, DE
+        loadAR(&(registers->de));
         break; 
 
-    case 0x1B: // INC DE
-        incR16(&(registers->de));
+    case 0x1B: // DEC DE
+        decR16(&(registers->de));
         break;
 
-    case 0x1C: // INC DE
-        incR16(&(registers->de));
+    case 0x1C: // INC E
+        incR8(&(registers->e));
         break;
 
-    case 0x1D: // INC DE
-        incR16(&(registers->de));
+    case 0x1D: // DEC E
+        decR8(&(registers->e));
         break;
 
-    case 0x1E: // INC DE
-        incR16(&(registers->de));
+    case 0x1E: // LD E, n
+        loadImR8(&(registers->e));
         break;
 
-    case 0x1F: // INC DE
-        incR16(&(registers->de));
+    case 0x1F: // RRA
+        rra();
         break;
 
-    case 0x20: // INC DE
-        incR16(&(registers->de));
+    case 0x20: // JR NZ, n
+        jrCIm(!registers->isFlagSet(RegistersFlags::ZERO_FLAG));
         break;
 
     case 0x21: // LD HL, nn
         loadImR16(&(registers->hl));
         break;
     
+    case 0x22: // LD HL+, A
+        loadAHlPlus();
+        break;
+    
     case 0x23: // INC HL
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x24: //INC H
+        incR8(&(registers->h));
+        break;
+        
+    case 0x25: //DEC H
+        decR8(&(registers->h));
+        break;
+        
+    case 0x26: //LD H, n
+        loadImR8(&(registers->h));
+        break;
+        
+    case 0x27: //DAA
+        daA();
+        break;
+        
+    case 0x28: //JR Z, n
+        jrCIm(registers->isFlagSet(RegistersFlags::ZERO_FLAG));
+        break;
+        
+    case 0x29: //ADD HL, HL 
+        addHlR(&(registers->hl));
+        break;
+        
+    case 0x2A: //LD A, HL+
+        loadHlAPlus();
+        break;
+        
+    case 0x2B: 
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x2C:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x2D:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x2E: 
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x2F:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x30:
         incR16(&(registers->hl));
         break;
         
@@ -172,12 +227,69 @@ void Instructions::execute(uint8_t instruction){
         loadImR16(&(registers->sp));
         break;
 
+    case 0x32:
+        incR16(&(registers->hl));
+        break;
+        
     case 0x33: // INC SP
         incR16(&(registers->sp));
         break;
 
+    case 0x34:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x35:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x36:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x37:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x38:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x39:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x3A:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x3B:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x3C:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x3D:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x3E:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x3F:
+        incR16(&(registers->hl));
+        break;
+        
+    case 0x40:
+        incR16(&(registers->hl));
+        break;
+        
     }
 }
+
 // Basic Instructions
 void Instructions::halt() {}
 void Instructions::stop() {
@@ -189,11 +301,27 @@ void Instructions::di() {}
 void Instructions::ei() {}
 
 // Control flow
-void Instructions::jpIm() {}
+
+void Instructions::jpIm() {
+    uint16_t address = readNext16Bit(); 
+    registers->pc = address;
+}
+
 void Instructions::jpHl() {}
+
+void Instructions::jrCIm(bool condition) {
+    int8_t address = (int8_t)readNext8Bit(); 
+    if(condition){
+        registers->pc += address;
+    }
+}
+
+void Instructions::jrIm() {
+    int8_t address = (int8_t)readNext8Bit(); 
+    registers->pc += address;
+}
+
 void Instructions::jpCIm() {}
-void Instructions::jrE() {}
-void Instructions::jrCE() {}
 void Instructions::callIm() {}
 void Instructions::callCIm() {}
 void Instructions::ret() {}
@@ -229,9 +357,22 @@ void Instructions::loadHCA() {}
 void Instructions::loadHAC() {}
 void Instructions::loadHAIm() {}
 void Instructions::loadHImA() {}
-void Instructions::loadAHlMinus() {}
+
+void Instructions::loadAHlMinus() {
+    uint8_t a = registers->a;
+    uint16_t hl = registers->hl;
+    memory->write(hl, a);
+    registers->hl--;
+}
+    
 void Instructions::loadHlAMinus() {}
-void Instructions::loadAHlPlus() {}
+
+void Instructions::loadAHlPlus() {
+    uint8_t a = registers->a;
+    uint16_t hl = registers->hl;
+    memory->write(hl, a);
+    registers->hl++;
+}
 void Instructions::loadHlAPlus() {}
 
 // Load 16 bit
@@ -434,7 +575,31 @@ void Instructions::xorAHl() {}
 void Instructions::xorAIm() {}
 void Instructions::ccf() {}
 void Instructions::scf() {}
-void Instructions::daA() {}
+
+
+void Instructions::daA() { //da capire meglio
+    uint8_t adj = 0; // non sono sicuro manco di questo
+    if(registers->isFlagSet(RegistersFlags::SUBTRACTION_FLAG)){
+        if(registers->isFlagSet(RegistersFlags::HALF_CARRY_FLAG)){
+            adj += 0x6;
+        }else if(registers->isFlagSet(RegistersFlags::CARRY_FLAG)){
+            adj+= 0x60;
+        }
+        registers->a -= adj;
+    }else{
+        if(registers->isFlagSet(RegistersFlags::HALF_CARRY_FLAG) || registers->a & 0xF > 0x9){
+            adj += 0x6;
+        }else if (registers->isFlagSet(RegistersFlags::CARRY_FLAG) || registers->a > 0x99){
+            adj += 0x60;
+        }
+        registers->a += adj;
+    }
+
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, registers->a == 0);
+    registers->setFlag(RegistersFlags::CARRY_FLAG, true); //? ? ? DA CAPIRE
+}
+
 void Instructions::cpA() {}
 
 // Arithmetic and logical 16 bit
@@ -466,6 +631,7 @@ void Instructions::addHlR(uint16_t *reg) {
 void Instructions::addSpE() {}
 
 // Bit operations
+
 void Instructions::rla() {
     uint8_t a = registers->a;
     uint8_t bit7 = (a & 0x80) >> 7;
@@ -479,7 +645,17 @@ void Instructions::rla() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
 }
-void Instructions::rra() {}
+
+void Instructions::rra() {
+    uint8_t oldValue = registers->a;
+    uint8_t bit1 = (oldValue & 0x01) << 7;
+    registers->a = oldValue >> 1 | bit1;
+
+    registers->setFlag(RegistersFlags::CARRY_FLAG, bit1);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, false);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+}
 
 void Instructions::rlcR(uint8_t *reg) {
     uint8_t oldValue = *reg;

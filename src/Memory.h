@@ -14,4 +14,5 @@ class Memory
     unsigned char oam[0x100]; //Object Attribute Memory. Contiene gli attributi degli oggetti mostrati a schermo
 
     uint8_t read(uint16_t address);
+    void write(uint16_t address, uint8_t content);
 };
