@@ -199,104 +199,261 @@ void Instructions::execute(uint8_t instruction){
         loadHlAPlus();
         break;
         
-    case 0x2B: 
-        incR16(&(registers->hl));
+    case 0x2B: //DEC HL
+        decR16(&(registers->hl));
         break;
         
-    case 0x2C:
-        incR16(&(registers->hl));
+    case 0x2C: //INC L
+        incR8(&(registers->l));
         break;
         
-    case 0x2D:
-        incR16(&(registers->hl));
+    case 0x2D: //DEC L
+        decR8(&(registers->l));
         break;
         
-    case 0x2E: 
-        incR16(&(registers->hl));
+    case 0x2E: //LD L, n
+        loadImR8(&(registers->l));
         break;
         
-    case 0x2F:
-        incR16(&(registers->hl));
+    case 0x2F: //CPL
+        cpA();
         break;
         
-    case 0x30:
-        incR16(&(registers->hl));
+    case 0x30: //JR NC, n
+        jrCIm(registers->isFlagSet(~RegistersFlags::CARRY_FLAG));
         break;
         
     case 0x31: // LD SP, nn
         loadImR16(&(registers->sp));
         break;
 
-    case 0x32:
-        incR16(&(registers->hl));
+    case 0x32: //LD HL-, A
+        loadAHlMinus();
         break;
         
     case 0x33: // INC SP
         incR16(&(registers->sp));
         break;
 
-    case 0x34:
-        incR16(&(registers->hl));
+    case 0x34: //INC (HL)
+        incHl();
         break;
         
-    case 0x35:
-        incR16(&(registers->hl));
+    case 0x35: //DEC (HL)
+        decHl();
         break;
         
-    case 0x36:
-        incR16(&(registers->hl));
+    case 0x36: //LD (HL), n
+        loadImHl();
         break;
         
-    case 0x37:
-        incR16(&(registers->hl));
+    case 0x37: //SCF
+        scf();
         break;
         
-    case 0x38:
-        incR16(&(registers->hl));
+    case 0x38: //JR C, n
+        jrCIm(registers->isFlagSet(RegistersFlags::CARRY_FLAG));
         break;
         
-    case 0x39:
-        incR16(&(registers->hl));
+    case 0x39: //ADD HL, SP
+        addHlR(&(registers->sp));
         break;
         
-    case 0x3A:
-        incR16(&(registers->hl));
+    case 0x3A: //LD A, (HL-)
+        loadHlAMinus();
         break;
         
-    case 0x3B:
-        incR16(&(registers->hl));
+    case 0x3B: //DEC SP 
+        decR16(&(registers->sp));
         break;
         
-    case 0x3C:
-        incR16(&(registers->hl));
+    case 0x3C: //INC A
+        incR8(&(registers->a));
         break;
         
-    case 0x3D:
-        incR16(&(registers->hl));
+    case 0x3D: //DEC A
+        decR8(&(registers->a));
         break;
         
-    case 0x3E:
-        incR16(&(registers->hl));
+    case 0x3E: //LD A, n
+        loadImR8(&(registers->a));
         break;
         
-    case 0x3F:
-        incR16(&(registers->hl));
+    case 0x3F: //CCF
+        ccf();
         break;
         
-    case 0x40:
-        incR16(&(registers->hl));
+    case 0x40: //LD B, B
+        loadRR8(&(registers->b), &(registers->b));
+        break;
+    
+    case 0x41: //LD B, C
+        loadRR8(&(registers->b), &(registers->c));
+        break;
+    
+    case 0x42: //LD B, D
+        loadRR8(&(registers->b), &(registers->d));
+        break;
+    
+    case 0x43: //LD B, E
+        loadRR8(&(registers->b), &(registers->e));
+        break;
+    
+    case 0x44: //LD B, H
+        loadRR8(&(registers->b), &(registers->h));
+        break;
+    
+    case 0x45: //LD B, L
+        loadRR8(&(registers->b), &(registers->l));
+        break;
+    
+    case 0x46: //LD B, (HL)
+        loadHlR(&(registers->b));
+        break;
+    
+    case 0x47: //LD B, A
+        loadRR8(&(registers->b), &(registers->a));
+        break;
+    
+    case 0x48: //LD C, B
+        loadRR8(&(registers->c), &(registers->b));
+        break;
+    
+    case 0x49: //LD C, C
+        loadRR8(&(registers->c), &(registers->c));
+        break;
+    
+    case 0x4A: //LD C, D
+        loadRR8(&(registers->c), &(registers->d));
+        break;
+    
+    case 0x4B: //LD C, E
+        loadRR8(&(registers->c), &(registers->e));
+        break;
+    
+    case 0x4C: //LD C, H    
+        loadRR8(&(registers->c), &(registers->h));
+        break;
+    
+    case 0x4D: //LD C, L
+        loadRR8(&(registers->c), &(registers->l));
+        break;
+    
+    case 0x4E: //LD C, (hl)
+        loadHlR(&(registers->c));
+        break;
+    
+    case 0x4F: //LD C, A
+        loadRR8(&(registers->b), &(registers->c));
         break;
         
+    case 0x50: //LD D, B
+        loadRR8(&(registers->d), &(registers->b));
+        break;
+    
+    case 0x51: //LD D, C
+        loadRR8(&(registers->d), &(registers->c));
+        break;
+    
+    case 0x52: //LD D, D
+        loadRR8(&(registers->d), &(registers->d));
+        break;
+    
+    case 0x53: //LD D, E
+        loadRR8(&(registers->d), &(registers->e));
+        break;
+    
+    case 0x54: //LD D, H    
+        loadRR8(&(registers->c), &(registers->h));
+        break;
+    
+    case 0x55: //LD D, L
+        loadRR8(&(registers->d), &(registers->l));
+        break;
+    
+    case 0x56: //LD D, (hl)
+        loadHlR(&(registers->d));
+        break;
+    
+    case 0x57: //LD D, A
+        loadRR8(&(registers->d), &(registers->c));
+        break;
+            
+    case 0x58: //LD E, B
+        loadRR8(&(registers->e), &(registers->b));
+        break;
+    
+    case 0x59: //LD E, C
+        loadRR8(&(registers->e), &(registers->c));
+        break;
+    
+    case 0x5A: //LD E, D
+        loadRR8(&(registers->e), &(registers->d));
+        break;
+    
+    case 0x5B: //LD E, E
+        loadRR8(&(registers->e), &(registers->e));
+        break;
+    
+    case 0x5C: //LD E, H    
+        loadRR8(&(registers->e), &(registers->h));
+        break;
+    
+    case 0x5D: //LD E, L
+        loadRR8(&(registers->e), &(registers->l));
+        break;
+    
+    case 0x5E: //LD E, (hl)
+        loadHlR(&(registers->e));
+        break;
+    
+    case 0x5F: //LD E, A
+        loadRR8(&(registers->e), &(registers->c));
+        break;
+    
+    case 0x60: //LD H, B
+        loadRR8(&(registers->h), &(registers->b));
+        break;
+    
+    case 0x61: //LD H, C
+        loadRR8(&(registers->h), &(registers->c));
+        break;
+    
+    case 0x62: //LD H, D
+        loadRR8(&(registers->h), &(registers->d));
+        break;
+    
+    case 0x63: //LD H, E
+        loadRR8(&(registers->h), &(registers->e));
+        break;
+    
+    case 0x64: //LD H, H    
+        loadRR8(&(registers->h), &(registers->h));
+        break;
+    
+    case 0x65: //LD H, L
+        loadRR8(&(registers->h), &(registers->l));
+        break;
+    
+    case 0x66: //LD H, (hl)
+        loadHlR(&(registers->h));
+        break;
+    
+    case 0x67: //LD H, A
+        loadRR8(&(registers->h), &(registers->c));
+        break;       
     }
 }
 
 // Basic Instructions
 void Instructions::halt() {}
+
 void Instructions::stop() {
     //non lo so da capire meglio 
     //https://gbdev.io/pandocs/Reducing_Power_Consumption.html#using-the-stop-instruction
 
 }
+
 void Instructions::di() {}
 void Instructions::ei() {}
 
@@ -341,7 +498,11 @@ void Instructions::loadImR8(uint8_t *dest) {
 
 void Instructions::loadHlR(uint8_t *dest) {}
 void Instructions::loadRHl(uint8_t *source) {}
-void Instructions::loadImHl() {}
+
+void Instructions::loadImHl() {
+    uint8_t newValue = readNext8Bit();
+    memory->write(registers->hl, newValue);
+}
 
 void Instructions::loadRA(uint16_t *reg) {
     registers->a = *reg;
@@ -365,7 +526,11 @@ void Instructions::loadAHlMinus() {
     registers->hl--;
 }
     
-void Instructions::loadHlAMinus() {}
+void Instructions::loadHlAMinus() {
+    uint8_t value = memory->read(registers->hl);
+    registers->a = value;
+    registers->hl++;
+}
 
 void Instructions::loadAHlPlus() {
     uint8_t a = registers->a;
@@ -373,7 +538,12 @@ void Instructions::loadAHlPlus() {
     memory->write(hl, a);
     registers->hl++;
 }
-void Instructions::loadHlAPlus() {}
+
+void Instructions::loadHlAPlus() {
+    uint8_t value = memory->read(registers->hl);
+    registers->a = value;
+    registers->hl--;
+}
 
 // Load 16 bit
 void Instructions::loadImR16(uint16_t *dest) {   
@@ -524,7 +694,11 @@ void Instructions::incR8(uint8_t *reg) {
     }
 }
 
-void Instructions::incHl() {}
+void Instructions::incHl() {
+    uint8_t value = memory->read(registers->hl);
+    value++;
+    memory->write(registers->hl, value);
+}
 
 void Instructions::decR8(uint8_t *reg) {
     uint8_t oldRegValue = *reg;
@@ -541,7 +715,11 @@ void Instructions::decR8(uint8_t *reg) {
     }
 }
 
-void Instructions::decHl() {}
+void Instructions::decHl() {
+    uint8_t value = memory->read(registers->hl);
+    value--;
+    memory->write(registers->hl, value);
+}
 
 void Instructions::andAR(uint8_t *reg) {
     uint8_t a = registers->a & *reg;
@@ -573,8 +751,14 @@ void Instructions::orAIm() {}
 void Instructions::xorAR(uint8_t *reg) {}
 void Instructions::xorAHl() {}
 void Instructions::xorAIm() {}
-void Instructions::ccf() {}
-void Instructions::scf() {}
+
+void Instructions::ccf() {
+    registers->setFlag(RegistersFlags::CARRY_FLAG, ~registers->isFlagSet(RegistersFlags::CARRY_FLAG));
+}
+
+void Instructions::scf() {
+    registers->setFlag(RegistersFlags::CARRY_FLAG, true);
+}
 
 
 void Instructions::daA() { //da capire meglio
@@ -600,7 +784,9 @@ void Instructions::daA() { //da capire meglio
     registers->setFlag(RegistersFlags::CARRY_FLAG, true); //? ? ? DA CAPIRE
 }
 
-void Instructions::cpA() {}
+void Instructions::cpA() {
+    registers->a = ~registers->a;
+}
 
 // Arithmetic and logical 16 bit
 void Instructions::incR16(uint16_t *reg) {}
