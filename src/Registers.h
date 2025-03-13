@@ -1,3 +1,5 @@
+#ifndef REGISTERS_H
+#define REGISTERS_H
 #include <stdint.h>
 
 enum RegistersFlags{
@@ -54,4 +56,9 @@ class Registers {
 
     void setFlag(uint8_t flag, bool value);
     bool isFlagSet(uint8_t flag);
+    void printRegisters();
+    void printRegistersBit();
+    void printFlags();
 };
+
+#endif

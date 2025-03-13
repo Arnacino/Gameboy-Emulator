@@ -1,7 +1,10 @@
+#ifndef MEMORY_H
+#define MEMORY_H
 #include <stdint.h>
 
 class Memory
 {
+    private:
 
     public: 
     unsigned char rom00[0x4000]; //fixed ROM bank 00
@@ -16,3 +19,5 @@ class Memory
     uint8_t read(uint16_t address);
     void write(uint16_t address, uint8_t content);
 };
+
+#endif

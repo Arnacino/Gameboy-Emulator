@@ -1,4 +1,5 @@
 #include "Instructions.h"
+#include <iostream>
 
 Instructions::Instructions(Registers *registers, Memory *memory) {
     this->registers = registers;
@@ -441,12 +442,111 @@ void Instructions::execute(uint8_t instruction){
     
     case 0x67: //LD H, A
         loadRR8(&(registers->h), &(registers->c));
-        break;       
+        break;      
+    
+    case 0x68: //LD L, B
+        loadRR8(&(registers->l), &(registers->b));
+        break;      
+    
+    case 0x69: //LD L, C
+        loadRR8(&(registers->l), &(registers->c));
+        break;      
+    
+    case 0x6A: //LD L, D
+        loadRR8(&(registers->l), &(registers->d));
+        break;      
+    
+    case 0x6B: //LD L, E
+        loadRR8(&(registers->l), &(registers->e));
+        break;      
+    
+    case 0x6C: //LD L, H
+        loadRR8(&(registers->l), &(registers->h));
+        break;      
+    
+    case 0x6D: //LD L, L
+        loadRR8(&(registers->l), &(registers->l));
+        break;      
+    
+    case 0x6E: //LD L, (HL)
+        loadHlR(&(registers->l));
+        break;      
+    
+    case 0x6F: //LD L, A
+        loadRR8(&(registers->l), &(registers->c));
+        break;      
+    
+    case 0x70: //LD (HL), B
+        loadRHl(&(registers->b));
+        break;
+    
+    case 0x71: //LD (HL), C
+        loadRHl(&(registers->c));
+        break;
+    
+    case 0x72: //LD (HL), D
+        loadRHl(&(registers->d));
+        break;
+    
+    case 0x73: //LD (HL), E
+        loadRHl(&(registers->e));
+        break;
+    
+    case 0x74: //LD (HL), H    
+        loadRHl(&(registers->h));
+        break;
+    
+    case 0x75: //LD (HL), L
+        loadRHl(&(registers->l));
+        break;
+    
+    case 0x76: //HALT
+        halt();
+        break;
+    
+    case 0x77: //LD (HL), A
+        loadRHl(&(registers->a));
+        break;      
+    
+    case 0x78: //LD A, B
+        loadRR8(&(registers->a), &(registers->b));
+        break;      
+    
+    case 0x79: //LD A, C
+        loadRR8(&(registers->a), &(registers->c));
+        break;      
+    
+    case 0x7A: //LD A, D
+        loadRR8(&(registers->a), &(registers->d));
+        break;      
+    
+    case 0x7B: //LD A, E
+        loadRR8(&(registers->a), &(registers->e));
+        break;      
+    
+    case 0x7C: //LD A, H
+        loadRR8(&(registers->a), &(registers->h));
+        break;      
+    
+    case 0x7D: //LD A, L
+        loadRR8(&(registers->a), &(registers->l));
+        break;      
+    
+    case 0x7E: //LD A, (HL)
+        loadHlR(&(registers->a));
+        break;      
+    
+    case 0x7F: //LD A, A
+        loadRR8(&(registers->a), &(registers->a));
+        break;      
+
     }
 }
 
 // Basic Instructions
-void Instructions::halt() {}
+void Instructions::halt() {
+    //non so, dipende da una IME FLAG. non so cosa sia qwyufgwqyugfqwy
+}
 
 void Instructions::stop() {
     //non lo so da capire meglio 
@@ -464,7 +564,9 @@ void Instructions::jpIm() {
     registers->pc = address;
 }
 
-void Instructions::jpHl() {}
+void Instructions::jpHl() {
+    registers->pc = registers->hl;
+}
 
 void Instructions::jrCIm(bool condition) {
     int8_t address = (int8_t)readNext8Bit(); 
@@ -487,17 +589,27 @@ void Instructions::retI() {}
 void Instructions::rstIm() {}
 
 // Load 8 bit
-void Instructions::loadRR8(uint8_t *source, uint8_t *dest) {
+void Instructions::loadRR8(uint8_t *dest, uint8_t *source) {
+    
     *dest = *source;
+    
 }
 
+//DA IMPLEMENTARE READNEXT8BIT
 void Instructions::loadImR8(uint8_t *dest) {
     uint8_t immediate = readNext8Bit();
     *dest = immediate;
+
 }
 
-void Instructions::loadHlR(uint8_t *dest) {}
-void Instructions::loadRHl(uint8_t *source) {}
+void Instructions::loadHlR(uint8_t *dest) {
+    uint8_t value = memory->read(registers->hl);
+    *dest = value;
+}
+
+void Instructions::loadRHl(uint8_t *source) {
+    memory->write(registers->hl, *source);
+}
 
 void Instructions::loadImHl() {
     uint8_t newValue = readNext8Bit();
@@ -565,14 +677,14 @@ void Instructions::loadSpEHl() {}
 void Instructions::addAR(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result = a + *reg;
-    registers->a = result && 0xFF;
-
+    registers->a = (uint8_t) (result & 0xFF);
+    
     //overflow
     if(result > 0xFF){
         registers->setFlag(RegistersFlags::CARRY_FLAG, true);
     }
 
-    registers->setFlag(RegistersFlags::ZERO_FLAG, result & 0xFF == 0);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (result & 0xFF) == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
 
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
@@ -591,14 +703,14 @@ void Instructions::adcAR(uint8_t *reg) {
     }else{
         result = a + *reg;
     }
-    registers->a = result && 0xFF;
+    registers->a = result & 0xFF;
 
     //overflow
     if(result > 0xFF){
         registers->setFlag(RegistersFlags::CARRY_FLAG, true);
     }
 
-    registers->setFlag(RegistersFlags::ZERO_FLAG, result & 0xFF == 0);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (result & 0xFF) == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
 
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
@@ -611,20 +723,21 @@ void Instructions::adcAHl() {}
 void Instructions::adcAIm() {}
 
 void Instructions::subAR(uint8_t *reg) {
+
     uint8_t a = registers->a;
     uint16_t result = a - *reg;
-    registers->a = result && 0xFF;
+    registers->a = result & 0xFF;
 
     //overflow
-    if(result > 0xFF){
+    if(*reg > a){
         registers->setFlag(RegistersFlags::CARRY_FLAG, true);
     }
 
-    registers->setFlag(RegistersFlags::ZERO_FLAG, result & 0xFF == 0);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (result & 0xFF) == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
     
-    //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
-    if((a & 0xF) + (*reg & 0xF) > 0xF){
+    //resto per i primi 4 bit. controllo se i primi 4 bit del registro a cui sommo sono maggiori di A
+    if((a & 0xF) < (*reg & 0xF)){
         registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
     }
 }
@@ -753,7 +866,7 @@ void Instructions::xorAHl() {}
 void Instructions::xorAIm() {}
 
 void Instructions::ccf() {
-    registers->setFlag(RegistersFlags::CARRY_FLAG, ~registers->isFlagSet(RegistersFlags::CARRY_FLAG));
+    registers->setFlag(RegistersFlags::CARRY_FLAG, !registers->isFlagSet(RegistersFlags::CARRY_FLAG));
 }
 
 void Instructions::scf() {
@@ -761,8 +874,8 @@ void Instructions::scf() {
 }
 
 
-void Instructions::daA() { //da capire meglio
-    uint8_t adj = 0; // non sono sicuro manco di questo
+void Instructions::daA() { 
+    uint8_t adj = 0; 
     if(registers->isFlagSet(RegistersFlags::SUBTRACTION_FLAG)){
         if(registers->isFlagSet(RegistersFlags::HALF_CARRY_FLAG)){
             adj += 0x6;
@@ -771,7 +884,7 @@ void Instructions::daA() { //da capire meglio
         }
         registers->a -= adj;
     }else{
-        if(registers->isFlagSet(RegistersFlags::HALF_CARRY_FLAG) || registers->a & 0xF > 0x9){
+        if(registers->isFlagSet(RegistersFlags::HALF_CARRY_FLAG) || (registers->a & 0xF) > 0x9){
             adj += 0x6;
         }else if (registers->isFlagSet(RegistersFlags::CARRY_FLAG) || registers->a > 0x99){
             adj += 0x60;
@@ -826,6 +939,8 @@ void Instructions::rla() {
     }else{
         a = a << 1;
     }
+    registers->a = a;
+
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7==1);
     registers->setFlag(RegistersFlags::ZERO_FLAG, false);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);

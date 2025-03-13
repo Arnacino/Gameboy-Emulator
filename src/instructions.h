@@ -1,3 +1,5 @@
+#ifndef INSTRUCTIONS_H
+#define INSTRUCTIONS_H
 #include <stdint.h>
 #include "Registers.h"
 #include "Memory.h"
@@ -124,3 +126,5 @@ public:
     uint16_t readNext16Bit();
     uint8_t readNext8Bit();
 };
+
+#endif
