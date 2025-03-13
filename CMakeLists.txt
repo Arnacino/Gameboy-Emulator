@@ -18,9 +18,9 @@ file(GLOB SOURCES
 # Main executable
 add_executable(GameboyEmulator ${SOURCES})
 
-# Testing
-Include(FetchContent)
+include(FetchContent)
 
+# Fetch Catch2
 FetchContent_Declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -29,8 +29,19 @@ FetchContent_Declare(
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 )
-
 FetchContent_MakeAvailable(Catch2)
+
+# Fetch SDL2
+FetchContent_Declare(
+    SDL2
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG release-2.28.5  # Usa la versione corretta
+)
+FetchContent_MakeAvailable(SDL2)
+
+# Link SDL2 al progetto principale
+target_include_directories(GameboyEmulator PRIVATE ${SDL2_SOURCE_DIR}/include)
+target_link_libraries(GameboyEmulator PRIVATE SDL2-static)
 
 enable_testing()
 list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
@@ -40,6 +51,7 @@ add_executable(
     instructionsTests
     tests/instructionsTests.cpp
 )
+
 # Crea una libreria con i file sorgente
 add_library(emulator_lib
     src/instructions.cpp

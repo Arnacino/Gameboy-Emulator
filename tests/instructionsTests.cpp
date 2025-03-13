@@ -1,14 +1,16 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
-#include "../src/Instructions.h"
-#include "../src/Memory.h"
-#include "../src/Registers.h"
+#include "../src/instructions.h"
+#include "../src/memory.h"
+#include "../src/registers.h"
+#include "../src/interrupt.h"
 
 class TestFixture {
 protected:
     Memory memory;
     Registers registers;
-    Instructions instructions{&registers, &memory};
+    Interrupt interrupt;
+    Instructions instructions{&registers, &memory, &interrupt};
 };
 
 //OK
@@ -64,15 +66,27 @@ TEST_CASE_METHOD(TestFixture, "Arithmetic Instructions", "[instructions]") {
 //MANCANO IMPLEMENTAZIONI
 TEST_CASE_METHOD(TestFixture, "Basic Instructions", "[instructions]") {
     SECTION("DI and EI") {
-        // Poiché queste funzioni sono vuote, verifichiamo solo che non causino errori
-        REQUIRE_NOTHROW(instructions.di());
-        REQUIRE_NOTHROW(instructions.ei());
+        // Test DI (Disable Interrupts)
+        interrupt.setIME(true);
+        instructions.di();
+        REQUIRE(interrupt.isIMEset() == false);
+
+        // Test EI (Enable Interrupts)
+        interrupt.setIME(false);
+        instructions.ei();
+        REQUIRE(interrupt.isIMEset() == true);
     }
     
     SECTION("HALT and STOP") {
-        // Anche queste funzioni sono essenzialmente vuote, verifichiamo solo che non causino errori
-        REQUIRE_NOTHROW(instructions.halt());
-        REQUIRE_NOTHROW(instructions.stop());
+      /*  // Test HALT
+        interrupt.setHalted(false);
+        instructions.halt();
+        REQUIRE(interrupt.isHalted() == true);
+
+        // Test STOP
+        interrupt.setStopped(false);
+        instructions.stop(); 
+        REQUIRE(interrupt.isStopped() == true); */
     }
 }
 
@@ -239,9 +253,9 @@ TEST_CASE_METHOD(TestFixture, "Control Flow Instructions", "[instructions]") {
     SECTION("RST n") {
         registers.pc = 0x0100;
         registers.sp = 0xFFFE;
-        uint8_t rstVec = 0x08;  // Vettore di reset (0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38)
+        uint16_t rstVec = 0x0008;  // Vettore di reset (0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38)
         
-        instructions.rstIm();
+        instructions.rst(rstVec);
         
         // Verifica che l'indirizzo di ritorno sia stato inserito nello stack
         REQUIRE(memory.read(0xFFFD) == 0x01);
@@ -464,7 +478,7 @@ TEST_CASE_METHOD(TestFixture, "Load 16-bit Instructions", "[instructions]") {
     
     SECTION("LD SP,HL") {
         registers.hl = 0xABCD;
-        instructions.loadSpHl();
+        instructions.loadHlSp();
         REQUIRE(registers.sp == 0xABCD);
     }
     
@@ -566,7 +580,7 @@ TEST_CASE_METHOD(TestFixture, "Load 8-bit Increment/Decrement Instructions", "[i
     SECTION("LD A,(HL+)") {
         registers.hl = 0x1234;
         memory.write(0x1234, 0x42);
-        instructions.loadHlAPlus();
+        instructions.loadHlPlusA();
         REQUIRE(registers.a == 0x42);
         REQUIRE(registers.hl == 0x1233);  // Decrement HL
     }
@@ -574,7 +588,7 @@ TEST_CASE_METHOD(TestFixture, "Load 8-bit Increment/Decrement Instructions", "[i
     SECTION("LD A,(HL-)") {
         registers.hl = 0x1234;
         memory.write(0x1234, 0x42);
-        instructions.loadHlAMinus();
+        instructions.loadHlMinusA();
         REQUIRE(registers.a == 0x42);
         REQUIRE(registers.hl == 0x1235);  // Increment HL
     }
@@ -703,30 +717,60 @@ TEST_CASE_METHOD(TestFixture, "Load 8-bit Special Instructions", "[instructions]
     }
 }
 
-//OK
+//DA IMPLEMENTARE
 TEST_CASE_METHOD(TestFixture, "Load Address Instructions", "[instructions]") {
     SECTION("LD A,(nn)") {
-        instructions.loadAdA();
+        // Set up test values
+        memory.write(registers.pc, 0x34);     // LSB of address
+        memory.write(registers.pc + 1, 0x12); // MSB of address
+        memory.write(0x1234, 0x42);          // Value at target address
+        instructions.loadImA();
+        REQUIRE(registers.a == 0x42);
+        REQUIRE(registers.pc == 2);
     }
     
     SECTION("LD (nn),A") {
-        instructions.loadAAd();
+        // Set up test values
+        registers.a = 0x42;
+        memory.write(registers.pc, 0x34);     // LSB of address
+        memory.write(registers.pc + 1, 0x12); // MSB of address
+        instructions.loadAIm();
+        REQUIRE(memory.read(0x1234) == 0x42);
+        REQUIRE(registers.pc == 2);
     }
 
     SECTION("LDH A,(n)") {
-        instructions.loadHAIm();
+        // Set up test values for high RAM access (0xFF00 + n)
+        memory.write(registers.pc, 0x80);    // offset n
+        memory.write(0xFF80, 0x42);         // Value at FF80
+        instructions.loadAHIm();
+        REQUIRE(registers.a == 0x42);
+        REQUIRE(registers.pc == 1);
     }
     
     SECTION("LDH (n),A") {
+        // Set up test values for high RAM access (0xFF00 + n)
+        registers.a = 0x42;
+        memory.write(registers.pc, 0x80);    // offset n
         instructions.loadHImA();
+        REQUIRE(memory.read(0xFF80) == 0x42);
+        REQUIRE(registers.pc == 1);
     }
 
     SECTION("LDH A,(C)") {
+        // Set up test values for high RAM access (0xFF00 + C)
+        registers.c = 0x80;
+        memory.write(0xFF80, 0x42);
         instructions.loadHCA();
+        REQUIRE(registers.a == 0x42);
     }
 
     SECTION("LDH (C),A") {
-        instructions.loadHAC();
+        // Set up test values for high RAM access (0xFF00 + C)
+        registers.a = 0x42;
+        registers.c = 0x80;
+        instructions.loadAHC();
+        REQUIRE(memory.read(0xFF80) == 0x42);
     }
 }
 

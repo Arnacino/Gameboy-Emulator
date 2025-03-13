@@ -1,8 +1,9 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 #include <stdint.h>
-#include "Registers.h"
-#include "Memory.h"
+#include "registers.h"
+#include "memory.h"
+#include "interrupt.h"
 
 class Instructions
 {
@@ -10,9 +11,10 @@ class Instructions
 private:
     Registers *registers;
     Memory *memory;
+    Interrupt *interrupt;
 
 public:
-    Instructions(Registers *registers, Memory *memory);
+    Instructions(Registers *registers, Memory *memory, Interrupt *interrupt);
     void halt();
     void stop();
     void di(); //disable interrupts
@@ -29,7 +31,7 @@ public:
     void ret(); //return from function
     void retC(bool condition); //conditional return
     void retI(); //return from interrupt
-    void rstIm(); //restart
+    void rst(uint16_t address); //restart
 
     //load 8 bit (a destra c'è sempre dove finisce il risultato)
     void loadRR8(uint8_t *source, uint8_t *dest); //load data from r1 to r2
@@ -39,21 +41,21 @@ public:
     void loadImHl(); //load immediate to the adress specified by Hl
     void loadRA(uint16_t *reg); //load data from register to A to register
     void loadAR(uint16_t *reg); //load data from A to the adress specified by register
-    void loadAdA(); //load data from the adress specified to A
-    void loadAAd(); //load data from A to the absolute adress specified
-    void loadHCA(); //load data from 0xFF00 + C to register
-    void loadHAC(); //load data from A to 0xFF00 + C
-    void loadHAIm(); //load data from 0xFF00 + Immediate (8 bit) to A
-    void loadHImA(); //load data from A to the adress 0xFF00 + Immediate 
-    void loadAHlMinus(); //load data from the adress specified by HL to A. Decrements HL
-    void loadHlAMinus(); //load data from A to the absolute adress specified by HL. Decrements HL 
-    void loadAHlPlus(); //load data from the adress specified by HL to A. Increments HL
-    void loadHlAPlus(); //load data from A to the absolute adress specified by HL. Increments HL 
+    void loadImA(); //load data from the adress specified to A
+    void loadAIm(); //load data from A to the absolute adress specified
+    void loadHCA(); //load data from 0xFF00 + C to A
+    void loadAHC(); //load data from A to 0xFF00 + C
+    void loadHImA(); //load data from 0xFF00 + Immediate (8 bit) to A
+    void loadAHIm(); //load data from A to the adress 0xFF00 + Immediate 
+    void loadHlMinusA(); //load data from the adress specified by HL to A. Decrements HL
+    void loadAHlMinus(); //load data from A to the absolute adress specified by HL. Decrements HL 
+    void loadHlPlusA(); //load data from the adress specified by HL to A. Increments HL
+    void loadAHlPlus(); //load data from A to the absolute adress specified by HL. Increments HL 
 
     //load 16 bit
     void loadImR16(uint16_t *dest); //load immediate to register (16 bit)
     void loadSpIm(); //load stack pointer adress to adress specified (16 bit)
-    void loadSpHl(); //load hl to the stack pointer
+    void loadHlSp(); //load hl to the stack pointer
     void pushR(uint16_t *source); //push to the stack memory data from R (16 bit register)
     void popR(uint16_t *source); //same but pop
     void loadSpEHl(); //load Stack pointer + E (signed) to hl
@@ -61,6 +63,7 @@ public:
     //aritmetiche e logiche 8 bit
     void addRA(uint8_t *reg); //does A+R and stores it in A where R is a register passed
     void addHlA(); //does A+valueOf(Hl) and stores it in A
+    void addImA(); //does A + immediate and stores it in A (8 bit)
     void adcRA(uint8_t *reg); //does A+R and stores it in A. adds an extra 1 if carry flag is set
     void adcHlA(); //does A+valueOf(Hl) and stores it in A. adds an extra 1 if carry flag is set
     void adcImA(); //does A+Immediate and stores it in A. adds an extra 1 if carry flag is set
