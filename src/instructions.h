@@ -21,13 +21,13 @@ public:
     //control flow
     void jpIm(); //jumps to immediate (16 bit immediate)
     void jpHl(); //jumps to HL
-    void jpCIm(); //jumps depending on the condition
+    void jpCIm(bool condition); //jumps depending on the condition
     void jrIm(); //jumps relative to E
     void jrCIm(bool condition); //jumps depending on the condition, jumps relative to e
     void callIm(); //calls the function at adress immediate
-    void callCIm(); //same as above but conditional
+    void callCIm(bool condition); //same as above but conditional
     void ret(); //return from function
-    void retC(); //conditional return
+    void retC(bool condition); //conditional return
     void retI(); //return from interrupt
     void rstIm(); //restart
 
@@ -59,17 +59,17 @@ public:
     void loadSpEHl(); //load Stack pointer + E (signed) to hl
 
     //aritmetiche e logiche 8 bit
-    void addAR(uint8_t *reg); //does A+R and stores it in A where R is a register passed
-    void addAHl(); //does A+valueOf(Hl) and stores it in A
-    void adcAR(uint8_t *reg); //does A+R and stores it in A. adds an extra 1 if carry flag is set
-    void adcAHl(); //does A+valueOf(Hl) and stores it in A. adds an extra 1 if carry flag is set
-    void adcAIm(); //does A+Immediate and stores it in A. adds an extra 1 if carry flag is set
-    void subAR(uint8_t *reg); //does A-R and stores it in A
-    void subAHl(); //does A-valueOf(HL) and stores it in A
-    void subAIm(); //does A-Immediate and stores it in A
-    void sbcAR(uint8_t *reg); //does A-R with carry (removes an extra 1 if carry flag)
-    void sbcAHl(); //does A-valueOf(HL) with carry
-    void sbcAIm(); //does A-Immediate with carry
+    void addRA(uint8_t *reg); //does A+R and stores it in A where R is a register passed
+    void addHlA(); //does A+valueOf(Hl) and stores it in A
+    void adcRA(uint8_t *reg); //does A+R and stores it in A. adds an extra 1 if carry flag is set
+    void adcHlA(); //does A+valueOf(Hl) and stores it in A. adds an extra 1 if carry flag is set
+    void adcImA(); //does A+Immediate and stores it in A. adds an extra 1 if carry flag is set
+    void subRA(uint8_t *reg); //does A-R and stores it in A
+    void subHlA(); //does A-valueOf(HL) and stores it in A
+    void subImA(); //does A-Immediate and stores it in A
+    void sbcRA(uint8_t *reg); //does A-R with carry (removes an extra 1 if carry flag)
+    void sbcHlA(); //does A-valueOf(HL) with carry
+    void sbcImA(); //does A-Immediate with carry
     void cpAR(uint8_t *reg); //does A-R and changes flags based on result
     void cpAHl(); //does A-valueOf(HL) and changes flags based on result
     void cpAIm(); //does A-Immediate and changes flags based on result

@@ -538,8 +538,454 @@ void Instructions::execute(uint8_t instruction){
     
     case 0x7F: //LD A, A
         loadRR8(&(registers->a), &(registers->a));
+        break;
+
+    case 0x80: //ADD A, B
+        addRA(&(registers->b));
+        break;
+    
+    case 0x81: //ADD A, C
+        addRA(&(registers->c));
+        break;
+    
+    case 0x82: //ADD A, D
+        addRA(&(registers->d));
+        break;
+    
+    case 0x83: //ADD A, E
+        addRA(&(registers->e));
+        break;
+    
+    case 0x84: //ADD A, H
+        addRA(&(registers->h));
+        break;
+    
+    case 0x85: //ADD A, L
+        addRA(&(registers->l));
+        break;
+    
+    case 0x86: //ADD A, (HL)
+        addHlA();
+        break;
+    
+    case 0x87: //ADD A, A
+        addRA(&(registers->a));
+        break;      
+    
+    case 0x88: //ADC A, B
+        adcRA(&(registers->b));
+        break;      
+    
+    case 0x89: //ADC A, C
+        adcRA(&(registers->c));
+        break;      
+    
+    case 0x8A: //ADC A, D
+        adcRA(&(registers->d));
+        break;      
+    
+    case 0x8B: //ADC A, E
+        adcRA(&(registers->e));
+        break;      
+    
+    case 0x8C: //ADC A, H
+        adcRA(&(registers->h));
+        break;      
+    
+    case 0x8D: //ADC A, L
+        adcRA(&(registers->l));
+        break;      
+    
+    case 0x8E: //ADC A, (HL)
+        adcHlA();
+        break;      
+    
+    case 0x8F: //ADC A, A
+        adcRA(&(registers->a));
+        break;
+    
+    case 0x90: //SUB A, B
+        subRA(&(registers->b));
+        break;
+    
+    case 0x91: //SUB A, C
+        subRA(&(registers->c));
+        break;
+    
+    case 0x92: //SUB A, D
+        subRA(&(registers->d));
+        break;
+    
+    case 0x93: //SUB A, E
+        subRA(&(registers->e));
+        break;
+    
+    case 0x94: //SUB A, H
+        subRA(&(registers->h));
+        break;
+    
+    case 0x95: //SUB A, L
+        subRA(&(registers->l));
+        break;
+    
+    case 0x96: //SUB A, (HL)
+        subHlA();
+        break;
+    
+    case 0x97: //SUB A, A
+        subRA(&(registers->a));
+        break;      
+    
+    case 0x98: //SBC A, B
+        sbcRA(&(registers->b));
+        break;      
+    
+    case 0x99: //SBC A, C
+        sbcRA(&(registers->c));
+        break;      
+    
+    case 0x9A: //SBC A, D
+        sbcRA(&(registers->d));
+        break;      
+    
+    case 0x9B: //SBC A, E
+        adcRA(&(registers->e));
+        break;      
+    
+    case 0x9C: //SBC A, H
+        sbcRA(&(registers->h));
+        break;      
+    
+    case 0x9D: //SBC A, L
+        sbcRA(&(registers->l));
+        break;      
+    
+    case 0x9E: //SBC A, (HL)
+        sbcHlA();
+        break;      
+    
+    case 0x9F: //SBC A, A
+        sbcRA(&(registers->a));
+        break;
+
+    case 0xA0: //AND A, B
+        andAR(&(registers->b));
+        break;
+    
+    case 0xA1: //AND A, C
+        andAR(&(registers->c));
+        break;
+    
+    case 0xA2: //AND A, D
+        andAR(&(registers->d));
+        break;
+    
+    case 0xA3: //AND A, E
+        andAR(&(registers->e));
+        break;
+    
+    case 0xA4: //AND A, H
+        andAR(&(registers->h));
+        break;
+    
+    case 0xA5: //AND A, L
+        andAR(&(registers->l));
+        break;
+    
+    case 0xA6: //AND A, (HL)
+        andAHl();
+        break;
+    
+    case 0xA7: //AND A, A
+        andAR(&(registers->a));
+        break;      
+    
+    case 0xA8: //XOR A, B
+        xorAR(&(registers->b));
+        break;      
+    
+    case 0xA9: //XOR A, C
+        xorAR(&(registers->c));
         break;      
 
+    case 0xAA: //XOR A, D
+        xorAR(&(registers->d));
+        break;      
+    
+    case 0xAB: //XOR A, E
+        xorAR(&(registers->e));
+        break;      
+    
+    case 0xAC: //XOR A, H
+        xorAR(&(registers->h));
+        break;      
+    
+    case 0xAD: //XOR A, L
+        xorAR(&(registers->l));
+        break;      
+    
+    case 0xAE: //XOR A, (HL)
+        xorAHl();
+        break;      
+    
+    case 0xAF: //XOR A, A
+        xorAR(&(registers->a));
+        break;
+
+    case 0xB0: //OR A, B
+        orAR(&(registers->b));
+        break;
+    
+    case 0xB1: //OR A, C
+        orAR(&(registers->c));
+        break;
+    
+    case 0xB2: //OR A, D
+        orAR(&(registers->d));
+        break;
+        
+    case 0xB3: //OR A, E
+        orAR(&(registers->e));
+        break;
+        
+    case 0xB4: //OR A, H
+        orAR(&(registers->h));
+        break;
+        
+    case 0xB5: //OR A, L
+        orAR(&(registers->l));
+        break;
+        
+    case 0xB6: //OR A, (HL)
+        orAHl();
+        break;
+        
+    case 0xB7: //OR A, A
+        orAR(&(registers->a));
+        break;      
+        
+    case 0xB8: //CP A, B
+        cpAR(&(registers->b));
+        break;      
+        
+    case 0xB9: //CP A, C
+        cpAR(&(registers->c));
+        break;      
+
+    case 0xBA: //CP A, D
+        cpAR(&(registers->d));
+        break;      
+        
+    case 0xBB: //CP A, E
+        cpAR(&(registers->e));
+        break;      
+        
+    case 0xBC: //CP A, H
+        cpAR(&(registers->h));
+        break;      
+        
+   case 0xBD: //CP A, L
+        cpAR(&(registers->l));
+        break;      
+        
+    case 0xBE: //CP A, (HL)
+        cpAHl();
+        break;      
+        
+    case 0xBF: //CP A, A
+        cpAR(&(registers->a));
+        break;
+
+    case 0xC0: //RET NZ
+        retC(!registers->isFlagSet(RegistersFlags::ZERO_FLAG));
+        break;
+    
+    case 0xC1: //POP BC
+        popR(&(registers->bc));
+        break;
+    
+    case 0xC2: //JP NZ, nn
+        jpCIm(!registers->isFlagSet(RegistersFlags::ZERO_FLAG));
+        break;
+    
+    case 0xC3: //JP nn
+        jpIm();
+        break;
+    
+    case 0xC4: //CALL NZ, nn
+        callCIm(!registers->isFlagSet(RegistersFlags::ZERO_FLAG));
+        break;
+    
+    case 0xC5: //SUB A, L
+        subRA(&(registers->l));
+        break;
+    
+    case 0xC6: //SUB A, (HL)
+        subHlA();
+        break;
+    
+    case 0xC7: //SUB A, A
+        subRA(&(registers->a));
+        break;      
+    
+    case 0xC8: //SBC A, B
+        sbcRA(&(registers->b));
+        break;      
+    
+    case 0xC9: //SBC A, C
+        sbcRA(&(registers->c));
+        break;      
+    
+    case 0xCA: //SBC A, D
+        sbcRA(&(registers->d));
+        break;      
+    
+    case 0xCB: //SBC A, E
+        adcRA(&(registers->e));
+        break;      
+    
+    case 0xCC: //SBC A, H
+        sbcRA(&(registers->h));
+        break;      
+    
+    case 0xCD: //SBC A, L
+        sbcRA(&(registers->l));
+        break;      
+    
+    case 0xCE: //SBC A, (HL)
+        sbcHlA();
+        break;      
+    
+    case 0xCF: //SBC A, A
+        sbcRA(&(registers->a));
+        break;
+
+    case 0xD0: //SUB A, B
+        subRA(&(registers->b));
+        break;
+    
+    case 0xD1: //SUB A, C
+        subRA(&(registers->c));
+        break;
+    
+    case 0xD2: //SUB A, D
+        subRA(&(registers->d));
+        break;
+    
+    case 0xD3: 
+        break;
+    
+    case 0xD4: //SUB A, H
+        subRA(&(registers->h));
+        break;
+    
+    case 0xD5: //SUB A, L
+        subRA(&(registers->l));
+        break;
+    
+    case 0xD6: //SUB A, (HL)
+        subHlA();
+        break;
+    
+    case 0xD7: //SUB A, A
+        subRA(&(registers->a));
+        break;      
+    
+    case 0xD8: //SBC A, B
+        sbcRA(&(registers->b));
+        break;      
+    
+    case 0xD9: //SBC A, C
+        sbcRA(&(registers->c));
+        break;      
+    
+    case 0xDA: //SBC A, D
+        sbcRA(&(registers->d));
+        break;      
+    
+    case 0xDB: //SBC A, E
+        adcRA(&(registers->e));
+        break;      
+    
+    case 0xDC: //SBC A, H
+        sbcRA(&(registers->h));
+        break;      
+    
+    case 0xDD: //SBC A, L
+        sbcRA(&(registers->l));
+        break;      
+    
+    case 0xDE: //SBC A, (HL)
+        sbcHlA();
+        break;      
+    
+    case 0xDF: //SBC A, A
+        sbcRA(&(registers->a));
+        break;
+
+    case 0xF0: //SUB A, B
+        subRA(&(registers->b));
+        break;
+    
+    case 0xF1: //SUB A, C
+        subRA(&(registers->c));
+        break;
+    
+    case 0xF2: //SUB A, D
+        subRA(&(registers->d));
+        break;
+    
+    case 0xF3: //SUB A, E
+        subRA(&(registers->e));
+        break;
+    
+    case 0xF4: //SUB A, H
+        subRA(&(registers->h));
+        break;
+    
+    case 0xF5: //SUB A, L
+        subRA(&(registers->l));
+        break;
+    
+    case 0xF6: //SUB A, (HL)
+        subHlA();
+        break;
+    
+    case 0xF7: //SUB A, A
+        subRA(&(registers->a));
+        break;      
+    
+    case 0xF8: //SBC A, B
+        sbcRA(&(registers->b));
+        break;      
+    
+    case 0xF9: //SBC A, C
+        sbcRA(&(registers->c));
+        break;      
+    
+    case 0xFA: //SBC A, D
+        sbcRA(&(registers->d));
+        break;      
+    
+    case 0xFB: //SBC A, E
+        adcRA(&(registers->e));
+        break;      
+    
+    case 0xFC: //SBC A, H
+        sbcRA(&(registers->h));
+        break;      
+    
+    case 0xFD: //SBC A, L
+        sbcRA(&(registers->l));
+        break;      
+    
+    case 0xFE: //SBC A, (HL)
+        sbcHlA();
+        break;      
+    
+    case 0xFF: //SBC A, A
+        sbcRA(&(registers->a));
+        break;
     }
 }
 
@@ -580,11 +1026,43 @@ void Instructions::jrIm() {
     registers->pc += address;
 }
 
-void Instructions::jpCIm() {}
-void Instructions::callIm() {}
-void Instructions::callCIm() {}
-void Instructions::ret() {}
-void Instructions::retC() {}
+void Instructions::jpCIm(bool condition) {
+    uint16_t address = readNext16Bit();
+    if (condition){
+        registers->pc = address;
+    }
+}
+
+void Instructions::callIm() {
+    uint16_t address = readNext16Bit();
+    registers->sp = address;
+    registers->pc = address;
+}
+
+void Instructions::callCIm(bool condition) {
+    uint16_t address = readNext16Bit();
+    if(condition){
+        registers->sp = address;
+        registers->pc = address;
+    }
+}
+
+void Instructions::ret() {
+    uint16_t pc = registers->pc;
+    memory->write(registers->sp, pc & 0x00FF);
+    registers->sp++;
+    memory->write(registers->sp, pc & 0xFF00);
+}
+
+void Instructions::retC(bool condition) {
+    uint16_t pc = registers->pc;
+    if(condition){
+        memory->write(registers->sp, pc & 0x00FF);
+        registers->sp++;
+        memory->write(registers->sp, pc & 0xFF00);
+    }
+}
+
 void Instructions::retI() {}
 void Instructions::rstIm() {}
 
@@ -595,7 +1073,6 @@ void Instructions::loadRR8(uint8_t *dest, uint8_t *source) {
     
 }
 
-//DA IMPLEMENTARE READNEXT8BIT
 void Instructions::loadImR8(uint8_t *dest) {
     uint8_t immediate = readNext8Bit();
     *dest = immediate;
@@ -617,7 +1094,7 @@ void Instructions::loadImHl() {
 }
 
 void Instructions::loadRA(uint16_t *reg) {
-    registers->a = *reg;
+    registers->a = memory->read(*reg);
 }
 
 void Instructions::loadAR(uint16_t *reg) {
@@ -670,11 +1147,17 @@ void Instructions::loadSpIm() {
 
 void Instructions::loadSpHl() {}
 void Instructions::pushR(uint16_t *source) {}
-void Instructions::popR(uint16_t *source) {}
+
+void Instructions::popR(uint16_t *source) {
+    memory->write(registers->sp, *source & 0x00FF);
+    registers->sp++;
+    memory->write(registers->sp, *source & 0xFF00);
+}
+
 void Instructions::loadSpEHl() {}
 
 // Arithmetic and logical 8 bit
-void Instructions::addAR(uint8_t *reg) {
+void Instructions::addRA(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result = a + *reg;
     registers->a = (uint8_t) (result & 0xFF);
@@ -693,9 +1176,27 @@ void Instructions::addAR(uint8_t *reg) {
     }
 }
 
-void Instructions::addAHl() {}
+void Instructions::addHlA() {
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint16_t result = a + hlValue;
+    registers->a = (uint8_t) (result & 0xFF);
+    
+    //overflow
+    if(result > 0xFF){
+        registers->setFlag(RegistersFlags::CARRY_FLAG, true);
+    }
 
-void Instructions::adcAR(uint8_t *reg) {
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (result & 0xFF) == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+
+    //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
+    if((a & 0xF) + (hlValue & 0xF) > 0xF){
+        registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+    }
+}
+
+void Instructions::adcRA(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result;
     if(registers->isFlagSet(RegistersFlags::CARRY_FLAG)){
@@ -719,10 +1220,35 @@ void Instructions::adcAR(uint8_t *reg) {
     }    
 }
 
-void Instructions::adcAHl() {}
-void Instructions::adcAIm() {}
+void Instructions::adcHlA() {
 
-void Instructions::subAR(uint8_t *reg) {
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint16_t result;
+    if(registers->isFlagSet(RegistersFlags::CARRY_FLAG)){
+        result = a + hlValue + 1;
+    }else{
+        result = a + hlValue;
+    }
+    registers->a = result & 0xFF;
+
+    //overflow
+    if(result > 0xFF){
+        registers->setFlag(RegistersFlags::CARRY_FLAG, true);
+    }
+
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (result & 0xFF) == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+
+    //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
+    if((a & 0xF) + (hlValue & 0xF) > 0xF){
+        registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+    }    
+}
+
+void Instructions::adcImA() {}
+
+void Instructions::subRA(uint8_t *reg) {
 
     uint8_t a = registers->a;
     uint16_t result = a - *reg;
@@ -742,10 +1268,30 @@ void Instructions::subAR(uint8_t *reg) {
     }
 }
 
-void Instructions::subAHl() {}
-void Instructions::subAIm() {}
+void Instructions::subHlA() {
+    
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint16_t result = a - hlValue;
+    registers->a = result & 0xFF;
 
-void Instructions::sbcAR(uint8_t *reg) {
+    //overflow
+    if(hlValue > a){
+        registers->setFlag(RegistersFlags::CARRY_FLAG, true);
+    }
+
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (result & 0xFF) == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
+    
+    //resto per i primi 4 bit. controllo se i primi 4 bit del registro a cui sommo sono maggiori di A
+    if((a & 0xF) < (hlValue & 0xF)){
+        registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+    }
+}
+
+void Instructions::subImA() {}
+
+void Instructions::sbcRA(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result;
     if(registers->isFlagSet(RegistersFlags::CARRY_FLAG)){
@@ -762,15 +1308,39 @@ void Instructions::sbcAR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
-    if((a & 0xF) + (*reg & 0xF) > 0xF){
+    if((a & 0xF) < (*reg & 0xF)){
         registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
     }
     
     registers->a = result && 0xFF;
 }
 
-void Instructions::sbcAHl() {}
-void Instructions::sbcAIm() {}
+void Instructions::sbcHlA() {
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint16_t result;
+    if(registers->isFlagSet(RegistersFlags::CARRY_FLAG)){
+        result = a - hlValue - 1;
+    }else {
+        result = a - hlValue;
+    }
+
+    //overflow
+    if(result > 0xFF){
+        registers->setFlag(RegistersFlags::CARRY_FLAG, true);
+    }
+    registers->setFlag(RegistersFlags::ZERO_FLAG, result & 0xFF == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    
+    //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
+    if((a & 0xF) < (hlValue & 0xF)){
+        registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+    }
+    
+    registers->a = result && 0xFF;
+}
+
+void Instructions::sbcImA() {}
 
 void Instructions::cpAR(uint8_t *reg) {
     uint8_t a = registers->a;
@@ -784,12 +1354,29 @@ void Instructions::cpAR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
     
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
-    if((a & 0xF) + (*reg & 0xF) > 0xF){
+    if((a & 0xF) < (*reg & 0xF)){
         registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
     }
 }
 
-void Instructions::cpAHl() {}
+void Instructions::cpAHl() {
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint16_t result = a - hlValue;
+
+    //overflow
+    if(result > 0xFF){
+        registers->setFlag(RegistersFlags::CARRY_FLAG, true);
+    }
+    registers->setFlag(RegistersFlags::ZERO_FLAG, result & 0xFF == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
+    
+    //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
+    if((a & 0xF) < (hlValue & 0xF)){
+        registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+    }
+}
+
 void Instructions::cpAIm() {}
 
 void Instructions::incR8(uint8_t *reg) {
@@ -840,29 +1427,73 @@ void Instructions::andAR(uint8_t *reg) {
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, a & 0xFF == 0); //true se 0 altrimenti false
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+    registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+}
+
+void Instructions::andAHl() {
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint8_t res = a & hlValue;
+    registers->a = res;
+
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (res & 0xFF) == 0); //true se 0 altrimenti false
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
 }
 
-void Instructions::andAHl() {}
 void Instructions::andAIm() {}
 
 void Instructions::orAR(uint8_t *reg) {
-    uint8_t a = registers->a | *reg;
-    registers->a = a;
+    uint8_t a = registers->a;
+    uint8_t res = registers->a | *reg;
+    registers->a = res;
 
-    registers->setFlag(RegistersFlags::ZERO_FLAG, a & 0xFF == 0);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, res == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
 
-    
 }
 
-void Instructions::orAHl() {}
+void Instructions::orAHl() {
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint8_t res = a | hlValue;
+    registers->a = res;
+
+    registers->setFlag(RegistersFlags::ZERO_FLAG, res == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+    registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+}
+
 void Instructions::orAIm() {}
-void Instructions::xorAR(uint8_t *reg) {}
-void Instructions::xorAHl() {}
+
+void Instructions::xorAR(uint8_t *reg) {
+    uint8_t a = registers->a;
+    uint8_t res = a xor *reg;
+    registers->a = res;
+
+    registers->setFlag(RegistersFlags::ZERO_FLAG, res == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+    registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+}
+
+void Instructions::xorAHl() {
+    uint8_t a = registers->a;
+    uint8_t hlValue = memory->read(registers->hl);
+    uint8_t res = (a & ~hlValue) | (~a & hlValue);
+    registers->a = res;
+
+    registers->setFlag(RegistersFlags::ZERO_FLAG, res == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+    registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+}
+
 void Instructions::xorAIm() {}
 
 void Instructions::ccf() {
@@ -902,7 +1533,10 @@ void Instructions::cpA() {
 }
 
 // Arithmetic and logical 16 bit
-void Instructions::incR16(uint16_t *reg) {}
+void Instructions::incR16(uint16_t *reg) {
+    uint16_t oldRegValue = *reg;
+    (*reg)++;
+}
 
 void Instructions::decR16(uint16_t *reg) {
     uint16_t oldRegValue = *reg;
