@@ -36,30 +36,37 @@ int Instructions::execute(uint8_t instruction){
 
     case 0x01: //LD BC, nn
         loadImR16(&(registers->bc));
+        return 3;
         break;
 
     case 0x02: //LD BC, A
         loadAR(&(registers->bc));
+        return 2;
         break;
 
     case 0x03: // INC BC
         incR16(&(registers->bc));
+        return 2;
         break;
 
     case 0x04: //INC B
         incR8(&(registers->b));
+        return 1;
         break;
     
     case 0x05: //DEC B
         decR8(&(registers->b));
+        return 1;
         break;
         
     case 0x06: // LD B, n
         loadImR8(&(registers->b));
+        return 2;
         break;
         
     case 0x07: //RLCA (sarebbe come uno shift left però l'ultimo bit diventa il primo)
         rlcR(&(registers->a));
+        return 1;
         break;
         
     case 0x08: //LD SP, nn
@@ -80,6 +87,7 @@ int Instructions::execute(uint8_t instruction){
         
     case 0x0C: //INC C
         incR8(&(registers->c));
+        return 1;
         break;
         
     case 0x0D: //DEC C
@@ -108,10 +116,12 @@ int Instructions::execute(uint8_t instruction){
 
     case 0x13: // INC DE
         incR16(&(registers->de));
+        return 2;
         break;
 
     case 0x14: // INC D
         incR8(&(registers->d));
+        return 1;
         break;
 
     case 0x15: // DEC D
@@ -144,6 +154,7 @@ int Instructions::execute(uint8_t instruction){
 
     case 0x1C: // INC E
         incR8(&(registers->e));
+        return 1;
         break;
 
     case 0x1D: // DEC E
@@ -172,10 +183,12 @@ int Instructions::execute(uint8_t instruction){
     
     case 0x23: // INC HL
         incR16(&(registers->hl));
+        return 2;
         break;
         
     case 0x24: //INC H
         incR8(&(registers->h));
+        return 1;
         break;
         
     case 0x25: //DEC H
@@ -208,6 +221,7 @@ int Instructions::execute(uint8_t instruction){
         
     case 0x2C: //INC L
         incR8(&(registers->l));
+        return 1;
         break;
         
     case 0x2D: //DEC L
@@ -236,6 +250,7 @@ int Instructions::execute(uint8_t instruction){
         
     case 0x33: // INC SP
         incR16(&(registers->sp));
+        return 2;
         break;
 
     case 0x34: //INC (HL)
@@ -272,6 +287,7 @@ int Instructions::execute(uint8_t instruction){
         
     case 0x3C: //INC A
         incR8(&(registers->a));
+        return 1;
         break;
         
     case 0x3D: //DEC A
@@ -288,30 +304,37 @@ int Instructions::execute(uint8_t instruction){
         
     case 0x40: //LD B, B
         loadRR8(&(registers->b), &(registers->b));
+        return 1;
         break;
     
     case 0x41: //LD B, C
         loadRR8(&(registers->b), &(registers->c));
+        return 1;
         break;
     
     case 0x42: //LD B, D
         loadRR8(&(registers->b), &(registers->d));
+        return 1;
         break;
     
     case 0x43: //LD B, E
         loadRR8(&(registers->b), &(registers->e));
+        return 1;
         break;
     
     case 0x44: //LD B, H
         loadRR8(&(registers->b), &(registers->h));
+        return 1;
         break;
     
     case 0x45: //LD B, L
         loadRR8(&(registers->b), &(registers->l));
+        return 1;
         break;
     
     case 0x46: //LD B, (HL)
         loadHlR(&(registers->b));
+        return 2;
         break;
     
     case 0x47: //LD B, A
@@ -837,6 +860,7 @@ int Instructions::execute(uint8_t instruction){
     
     case 0xC9: //RET
         ret();
+        return 4;
         break;      
     
     case 0xCA: //JP Z, nn
@@ -1140,27 +1164,30 @@ void Instructions::callCIm(bool condition) {
 }
 
 void Instructions::ret() {
-    uint16_t pc = registers->pc;
-    memory->write(registers->sp, pc & 0x00FF);
+    uint8_t lsb = memory->read(registers->sp);
     registers->sp++;
-    memory->write(registers->sp, pc & 0xFF00);
+    uint8_t msb = memory->read(registers->sp);
+    registers->sp++;
+    registers->pc = (static_cast<uint16_t>(msb) << 8) | lsb;
 }
 
 void Instructions::retC(bool condition) {
-    uint16_t pc = registers->pc;
     if(condition){
-        memory->write(registers->sp, pc & 0x00FF);
+        uint8_t lsb = memory->read(registers->sp);
         registers->sp++;
-        memory->write(registers->sp, pc & 0xFF00);
+        uint8_t msb = memory->read(registers->sp);
+        registers->sp++;
+        registers->pc = (static_cast<uint16_t>(msb) << 8) | lsb;
     }
 }
 
 void Instructions::retI() {
     interrupt->setIME(true);
-    uint16_t pc = registers->pc;
-    memory->write(registers->sp, pc & 0x00FF);
+    uint8_t lsb = memory->read(registers->sp);
     registers->sp++;
-    memory->write(registers->sp, pc & 0xFF00);
+    uint8_t msb = memory->read(registers->sp);
+    registers->sp++;
+    registers->pc = (static_cast<uint16_t>(msb) << 8) | lsb;
 }
 
 void Instructions::rst(uint16_t address) {
@@ -1176,7 +1203,6 @@ void Instructions::loadRR8(uint8_t *dest, uint8_t *source) {
 void Instructions::loadImR8(uint8_t *dest) {
     uint8_t immediate = readNext8Bit();
     *dest = immediate;
-
 }
 
 void Instructions::loadHlR(uint8_t *dest) {
@@ -1198,7 +1224,7 @@ void Instructions::loadRA(uint16_t *reg) {
 }
 
 void Instructions::loadAR(uint16_t *reg) {
-    *reg = registers->a;
+    memory->write(*reg, registers->a);
 }
 
 void Instructions::loadImA() {
@@ -1264,7 +1290,8 @@ void Instructions::loadImR16(uint16_t *dest) {
 
 void Instructions::loadSpIm() {
     uint16_t immediate = readNext16Bit();
-    registers->sp = immediate;
+    memory->write(immediate, registers->sp & 0xFF);
+    memory->write(immediate + 1, (registers->sp >> 8) & 0xFF);
 }
 
 void Instructions::loadHlSp() {
@@ -1272,10 +1299,10 @@ void Instructions::loadHlSp() {
 }
 
 void Instructions::pushR(uint16_t *source) {
-    registers->sp--;
     memory->write(registers->sp, *source & 0x00FF);
     registers->sp--;
     memory->write(registers->sp, *source & 0xFF00);
+    registers->sp--;
 }
 
 void Instructions::popR(uint16_t *source) {
