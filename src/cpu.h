@@ -11,9 +11,12 @@ class CPU {
         Registers* registers;
         Interrupt* interrupt;
         Instructions* instructions;
-    
+        int step(uint16_t pc);
+        void loop();
+        bool running = false;
     public:
-        CPU();
+        CPU(const char* filepath);
+        void run();
     };
 
 #endif

@@ -22,15 +22,16 @@ uint16_t Instructions::readNext16Bit(){
 uint8_t Instructions::readNext8Bit(){
     uint8_t immediate = memory->read(registers->pc);
     registers->pc++;
-
     return immediate;
 }
 
-void Instructions::execute(uint8_t instruction){
+// DA IMPLEMENTARE I CICLI CORRETTI PER OGNI ISTRUZIONE...
+int Instructions::execute(uint8_t instruction){
 
     switch (instruction){
     
     default:
+        return 1;
         break;
 
     case 0x01: //LD BC, nn
@@ -811,6 +812,7 @@ void Instructions::execute(uint8_t instruction){
     
     case 0xC3: //JP nn
         jpIm();
+        return 4;
         break;
     
     case 0xC4: //CALL NZ, nn
@@ -841,9 +843,45 @@ void Instructions::execute(uint8_t instruction){
         jpCIm(registers->isFlagSet(RegistersFlags::ZERO_FLAG));
         break;      
     
-    case 0xCB: //PREFIX CB -> should read another 16 bits ----------------------------------------------- !!!!!!!!!!!!!!!!!!!!!!!! 
-        break;      
-    
+    case 0xCB: { //PREFIX CB 
+        uint8_t nextInstruction = readNext8Bit();
+        switch(nextInstruction & 0xFF) {
+            case 0x00:
+                rlcR(&(registers->b));
+                return 2;
+                break;
+            
+            case 0x01:
+                rlcR(&(registers->c));
+                return 2;
+                break;
+            
+            case 0x02:
+                rlcR(&(registers->d));
+                return 2;
+                break;
+            
+            case 0x03:
+                rlcR(&(registers->e));
+                return 2;
+                break;
+            
+            case 0x04:
+                rlcR(&(registers->h));
+                return 2;
+                break;
+            
+            case 0x05:
+                rlcR(&(registers->l));
+                return 2;
+                break;
+            
+            default:
+                break;
+        }
+        break;
+    } 
+        
     case 0xCC: //CALL Z, nn
         callCIm(registers->isFlagSet(RegistersFlags::ZERO_FLAG));
         break;      
@@ -1022,6 +1060,7 @@ void Instructions::execute(uint8_t instruction){
         rst(0x0038);
         break;
     }
+    return 0;
 }
 
 // Basic Instructions
@@ -1131,9 +1170,7 @@ void Instructions::rst(uint16_t address) {
 
 // Load 8 bit
 void Instructions::loadRR8(uint8_t *dest, uint8_t *source) {
-    
     *dest = *source;
-    
 }
 
 void Instructions::loadImR8(uint8_t *dest) {

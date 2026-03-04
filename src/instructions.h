@@ -124,7 +124,7 @@ public:
     void setBR(uint8_t *reg); //same
     void setBHl();
 
-    void execute(uint8_t opcode);
+    int execute(uint8_t opcode);
 
     uint16_t readNext16Bit();
     uint8_t readNext8Bit();

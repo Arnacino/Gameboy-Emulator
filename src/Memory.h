@@ -1,6 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 #include <stdint.h>
+#include <iostream>
 
 class Memory
 {
@@ -18,6 +19,17 @@ class Memory
 
     uint8_t read(uint16_t address);
     void write(uint16_t address, uint8_t content);
+    bool loadRom(const char* filepath);
+
+    Memory(const char* filepath){
+        if(!loadRom(filepath)){
+            std::cout << "ROM is not valid or path is wrong" << std::endl;
+        }else{
+            std::cout<< "ROM loaded successfully" << std::endl;
+        }
+    }
+
+    
 };
 
 #endif

@@ -1,4 +1,25 @@
 #include "Memory.h"
+#include <fstream>
+#include <cstring>
+
+//questo supporta solo ROM fino a 32kb, per ROM più grande serve un MBC o qualcosa del genere
+bool Memory::loadRom(const char* filepath){
+    std::ifstream rom(filepath, std::ios_base::binary | std::ios::in);
+    if(!rom.is_open()){
+        return false;
+    }
+    
+    //cancella i contenuti precedenti
+    std::memset(rom00, 0, sizeof(rom00));
+    std::memset(rom01, 0, sizeof(rom01));
+    
+    rom.read(reinterpret_cast<char*>(rom00), 0x4000);
+    rom.read(reinterpret_cast<char*>(rom01), 0x4000);
+
+    rom.close();
+    return true;
+
+}
 
 void Memory::write(uint16_t address, uint8_t value){
 

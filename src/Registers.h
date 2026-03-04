@@ -12,7 +12,7 @@ enum RegistersFlags{
 class Registers {
 
     public:
-    uint16_t pc = 0; //program counter
+    uint16_t pc; //program counter
     uint16_t sp; //stack-pointer
     struct {
         union {
