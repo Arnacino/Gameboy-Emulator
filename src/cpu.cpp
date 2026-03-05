@@ -38,6 +38,7 @@ void CPU::loop(){
             std::cout << c;
             memory->write(0xFF02, 0x00);
         }
+
     }
 }
 

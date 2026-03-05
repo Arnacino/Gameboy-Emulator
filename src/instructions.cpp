@@ -2646,11 +2646,11 @@ void Instructions::stop() {
 }
 
 void Instructions::di() {
-    interrupt->setIME(false);
+    interrupt->disableIME();
 }
 
 void Instructions::ei() {
-    interrupt->setIME(true);
+    interrupt->enableIME();
 }
 
 // Control flow
@@ -2724,7 +2724,7 @@ void Instructions::retC(bool condition) {
 }
 
 void Instructions::retI() {
-    interrupt->setIME(true);
+    interrupt->enableIME();
     uint8_t lsb = memory->read(registers->sp);
     registers->sp++;
     uint8_t msb = memory->read(registers->sp);
@@ -3387,9 +3387,10 @@ void Instructions::rrca() {
 void Instructions::rrcHl() {
     uint8_t oldValue = memory->read(registers->hl);
     uint8_t lsb = oldValue & 0x01;
-    registers->a = oldValue >> 1 | (lsb << 7);
+    uint8_t result = oldValue >> 1 | (lsb << 7);
+    memory->write(registers->hl, result);
 
-    registers->setFlag(RegistersFlags::ZERO_FLAG, false);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb==1);
@@ -3471,7 +3472,7 @@ void Instructions::slaHl() {
 void Instructions::sraR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t lsb = oldValue & 0x01;
-    uint8_t bit7 = (oldValue & 0x80) >> 7;
+    uint8_t bit7 = (oldValue & 0x80);
     *reg = (oldValue >> 1) | bit7;
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, *reg == 0);
@@ -3483,7 +3484,7 @@ void Instructions::sraR(uint8_t *reg) {
 void Instructions::sraHl() {
     uint8_t oldValue = memory->read(registers->hl);
     uint8_t lsb = oldValue & 0x01;
-    uint8_t bit7 = (oldValue & 0x80) >> 7;
+    uint8_t bit7 = (oldValue & 0x80);
     uint8_t result = (oldValue >> 1) | bit7;
     memory->write(registers->hl, result);
 
@@ -3560,6 +3561,7 @@ void Instructions::resBHl(uint8_t bit) {
 void Instructions::setBR(uint8_t bit, uint8_t *reg) {
     *reg |= (1 << bit);
 }
+
 void Instructions::setBHl(uint8_t bit) {
     memory->write(registers->hl, (memory->read(registers->hl) | (1 << bit)));
 }

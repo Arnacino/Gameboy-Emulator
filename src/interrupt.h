@@ -6,8 +6,12 @@ class Interrupt
 private:
     bool IME;
 public:
-    void setIME(bool value){
-        this->IME = value;
+    void enableIME(){
+        this->IME = true;
+    }
+
+    void disableIME(){
+        this->IME = false;
     }
 
     bool isIMEset(){
