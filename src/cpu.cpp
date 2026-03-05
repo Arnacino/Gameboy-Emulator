@@ -30,9 +30,6 @@ void CPU::loop(){
     bool running = true;
 
     while(running){
-        std::cout << "PC: 0x" << std::hex << registers->pc 
-                << " Opcode: 0x" << std::hex << (int)memory->read(registers->pc) 
-                << std::endl;
         
         int cycles = step(registers->pc);
         

@@ -103,25 +103,28 @@ public:
     void rrca();
     void rla();
     void rra();
-    void rlcR(uint8_t *reg); //da vedere se 8 o 16 bit
+    void rlca();
+    void rlcR(uint8_t *reg);
     void rlcHl();
-    void rrcR(uint8_t *reg); //same
+    void rrcR(uint8_t *reg);
     void rrcHl();
-    void rrR(uint8_t *reg); //same
+    void rrR(uint8_t *reg); 
+    void rlR(uint8_t *reg); 
     void rrHl();
-    void slaR(uint8_t *reg); //same
+    void rlHl();
+    void slaR(uint8_t *reg); 
     void slaHl();
-    void sraR(uint8_t *reg); //same
+    void sraR(uint8_t *reg); 
     void sraHl();
-    void swapR(uint8_t *reg); //same
+    void swapR(uint8_t *reg); 
     void swapHl();
-    void srlR(uint8_t *reg); //same
+    void srlR(uint8_t *reg); 
     void srlHl();
-    void bitBR(uint8_t *reg); //same
+    void bitBR(uint8_t *reg);
     void bitBHl();
-    void resBR(uint8_t *reg); //same
+    void resBR(uint8_t *reg); 
     void resBHl();
-    void setBR(uint8_t *reg); //same
+    void setBR(uint8_t *reg); 
     void setBHl();
 
     int execute(uint8_t opcode);
