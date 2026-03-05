@@ -120,12 +120,12 @@ public:
     void swapHl();
     void srlR(uint8_t *reg); 
     void srlHl();
-    void bitBR(uint8_t *reg);
-    void bitBHl();
-    void resBR(uint8_t *reg); 
-    void resBHl();
-    void setBR(uint8_t *reg); 
-    void setBHl();
+    void bitBR(uint8_t bit, uint8_t *reg);
+    void bitBHl(uint8_t bit);
+    void resBR(uint8_t bit, uint8_t *reg); 
+    void resBHl(uint8_t bit);
+    void setBR(uint8_t bit, uint8_t *reg); 
+    void setBHl(uint8_t bit);
 
     int execute(uint8_t opcode);
 

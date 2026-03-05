@@ -109,8 +109,9 @@ int Instructions::execute(uint8_t instruction){
         return 1;
         break;
         
-    case 0x10: //STOP ---------------------------- DA IMPLEMENTARE (?)
+    case 0x10: //STOP
         stop();
+        return 2;
         break;
         
     case 0x11: // LD DE, nn
@@ -148,7 +149,7 @@ int Instructions::execute(uint8_t instruction){
         return 1;
         break;
 
-    case 0x18: // JR n (non sono per niente sicuro di questa. Da capire meglio)
+    case 0x18: // JR n 
         jrIm();
         return 3;
         break;
@@ -640,7 +641,7 @@ int Instructions::execute(uint8_t instruction){
     
     case 0x76: //HALT
         halt();
-        //????????????
+        return 1;
         break;
     
     case 0x77: //LD (HL), A
@@ -1411,6 +1412,965 @@ int Instructions::execute(uint8_t instruction){
                 return 2;
                 break;
 
+            case 0x40:
+                bitBR(0, &(registers->b));
+                return 2;
+                break;
+            
+            case 0x41:
+                bitBR(0, &(registers->c));
+                return 2;
+                break;
+            
+            case 0x42:
+                bitBR(0, &(registers->d));
+                return 2;
+                break;
+            
+            case 0x43:
+                bitBR(0, &(registers->e));
+                return 2;
+                break;
+            
+            case 0x44:
+                bitBR(0, &(registers->h));
+                return 2;
+                break;
+            
+            case 0x45:
+                bitBR(0, &(registers->l));
+                return 2;
+                break;
+
+            case 0x46:
+                bitBHl(0);
+                return 4;
+                break;
+
+            case 0x47:
+                bitBR(0, &(registers->a));
+                return 2;
+                break;
+
+            case 0x48:
+                bitBR(1, &(registers->b));
+                return 2;
+                break;
+
+            case 0x49:
+                bitBR(1, &(registers->c));
+                return 2;
+                break;
+
+            case 0x4A:
+                bitBR(1, &(registers->d));
+                return 2;
+                break;
+
+            case 0x4B:
+                bitBR(1, &(registers->e));
+                return 2;
+                break;
+
+            case 0x4C:
+                bitBR(1, &(registers->h));
+                return 2;
+                break;
+
+            case 0x4D:
+                bitBR(1, &(registers->l));
+                return 2;
+                break;
+
+            case 0x4E:
+                bitBHl(1);
+                return 4;
+                break;
+
+            case 0x4F:
+                bitBR(1, &(registers->a));
+                return 2;
+                break;
+
+            case 0x50:
+                bitBR(2, &(registers->b));
+                return 2;
+                break;
+            
+            case 0x51:
+                bitBR(2, &(registers->c));
+                return 2;
+                break;
+            
+            case 0x52:
+                bitBR(2, &(registers->d));
+                return 2;
+                break;
+            
+            case 0x53:
+                bitBR(2, &(registers->e));
+                return 2;
+                break;
+            
+            case 0x54:
+                bitBR(2, &(registers->h));
+                return 2;
+                break;
+            
+            case 0x55:
+                bitBR(2, &(registers->l));
+                return 2;
+                break;
+
+            case 0x56:
+                bitBHl(2);
+                return 4;
+                break;
+
+            case 0x57:
+                bitBR(2, &(registers->a));
+                return 2;
+                break;
+
+            case 0x58:
+                bitBR(3, &(registers->b));
+                return 2;
+                break;
+
+            case 0x59:
+                bitBR(3, &(registers->c));
+                return 2;
+                break;
+
+            case 0x5A:
+                bitBR(3, &(registers->d));
+                return 2;
+                break;
+
+            case 0x5B:
+                bitBR(3, &(registers->e));
+                return 2;
+                break;
+
+            case 0x5C:
+                bitBR(3, &(registers->h));
+                return 2;
+                break;
+
+            case 0x5D:
+                bitBR(3, &(registers->l));
+                return 2;
+                break;
+
+            case 0x5E:
+                bitBHl(3);
+                return 4;
+                break;
+
+            case 0x5F:
+                bitBR(3, &(registers->a));
+                return 2;
+                break;
+
+            case 0x60:
+                bitBR(4, &(registers->b));
+                return 2;
+                break;
+
+            case 0x61:
+                bitBR(4, &(registers->c));
+                return 2;
+                break;
+
+            case 0x62:
+                bitBR(4, &(registers->d));
+                return 2;
+                break;
+
+            case 0x63:
+                bitBR(4, &(registers->e));
+                return 2;
+                break;
+
+            case 0x64:
+                bitBR(4, &(registers->h));
+                return 2;
+                break;
+
+            case 0x65:
+                bitBR(4, &(registers->l));
+                return 2;
+                break;
+
+            case 0x66:
+                bitBHl(4);
+                return 4;
+                break;
+
+            case 0x67:
+                bitBR(4, &(registers->a));
+                return 2;
+                break;
+
+            case 0x68:
+                bitBR(5, &(registers->b));
+                return 2;
+                break;
+
+            case 0x69:
+                bitBR(5, &(registers->c));
+                return 2;
+                break;
+
+            case 0x6A:
+                bitBR(5, &(registers->d));
+                return 2;
+                break;
+
+            case 0x6B:
+                bitBR(5, &(registers->e));
+                return 2;
+                break;
+
+            case 0x6C:
+                bitBR(5, &(registers->h));
+                return 2;
+                break;
+
+            case 0x6D:
+                bitBR(5, &(registers->l));
+                return 2;
+                break;
+
+            case 0x6E:
+                bitBHl(5);
+                return 4;
+                break;
+
+            case 0x6F:
+                bitBR(5, &(registers->a));
+                return 2;
+                break;
+
+            case 0x70:
+                bitBR(6, &(registers->b));
+                return 2;
+                break;
+
+            case 0x71:
+                bitBR(6, &(registers->c));
+                return 2;
+                break;
+
+            case 0x72:
+                bitBR(6, &(registers->d));
+                return 2;
+                break;
+
+            case 0x73:
+                bitBR(6, &(registers->e));
+                return 2;
+                break;
+
+            case 0x74:
+                bitBR(6, &(registers->h));
+                return 2;
+                break;
+
+            case 0x75:
+                bitBR(6, &(registers->l));
+                return 2;
+                break;
+
+            case 0x76:
+                bitBHl(6);
+                return 4;
+                break;
+
+            case 0x77:
+                bitBR(6, &(registers->a));
+                return 2;
+                break;
+
+            case 0x78:
+                bitBR(7, &(registers->b));
+                return 2;
+                break;
+
+            case 0x79:
+                bitBR(7, &(registers->c));
+                return 2;
+                break;
+
+            case 0x7A:
+                bitBR(7, &(registers->d));
+                return 2;
+                break;
+
+            case 0x7B:
+                bitBR(7, &(registers->e));
+                return 2;
+                break;
+
+            case 0x7C:
+                bitBR(7, &(registers->h));
+                return 2;
+                break;
+
+            case 0x7D:
+                bitBR(7, &(registers->l));
+                return 2;
+                break;
+
+            case 0x7E:
+                bitBHl(7);
+                return 4;
+                break;
+
+            case 0x7F:
+                bitBR(7, &(registers->a));
+                return 2;
+                break;
+
+            case 0x80:
+                resBR(0, &(registers->b));
+                return 2;
+                break;
+            
+            case 0x81:
+                resBR(0, &(registers->c));
+                return 2;
+                break;
+            
+            case 0x82:
+                resBR(0, &(registers->d));
+                return 2;
+                break;
+            
+            case 0x83:
+                resBR(0, &(registers->e));
+                return 2;
+                break;
+            
+            case 0x84:
+                resBR(0, &(registers->h));
+                return 2;
+                break;
+            
+            case 0x85:
+                resBR(0, &(registers->l));
+                return 2;
+                break;
+
+            case 0x86:
+                resBHl(0);
+                return 4;
+                break;
+
+            case 0x87:
+                resBR(0, &(registers->a));
+                return 2;
+                break;
+
+            case 0x88:
+                resBR(1, &(registers->b));
+                return 2;
+                break;
+
+            case 0x89:
+                resBR(1, &(registers->c));
+                return 2;
+                break;
+
+            case 0x8A:
+                resBR(1, &(registers->d));
+                return 2;
+                break;
+
+            case 0x8B:
+                resBR(1, &(registers->e));
+                return 2;
+                break;
+
+            case 0x8C:
+                resBR(1, &(registers->h));
+                return 2;
+                break;
+
+            case 0x8D:
+                resBR(1, &(registers->l));
+                return 2;
+                break;
+
+            case 0x8E:
+                resBHl(1);
+                return 4;
+                break;
+
+            case 0x8F:
+                resBR(1, &(registers->a));
+                return 2;
+                break;
+
+            case 0x90:
+                resBR(2, &(registers->b));
+                return 2;
+                break;
+
+            case 0x91:
+                resBR(2, &(registers->c));
+                return 2;
+                break;
+
+            case 0x92:
+                resBR(2, &(registers->d));
+                return 2;
+                break;
+
+            case 0x93:
+                resBR(2, &(registers->e));
+                return 2;
+                break;
+
+            case 0x94:
+                resBR(2, &(registers->h));
+                return 2;
+                break;
+
+            case 0x95:
+                resBR(2, &(registers->l));
+                return 2;
+                break;
+
+            case 0x96:
+                resBHl(2);
+                return 4;
+                break;
+
+            case 0x97:
+                resBR(2, &(registers->a));
+                return 2;
+                break;
+
+            case 0x98:
+                resBR(3, &(registers->b));
+                return 2;
+                break;
+
+            case 0x99:
+                resBR(3, &(registers->c));
+                return 2;
+                break;
+
+            case 0x9A:
+                resBR(3, &(registers->d));
+                return 2;
+                break;
+
+            case 0x9B:
+                resBR(3, &(registers->e));
+                return 2;
+                break;
+
+            case 0x9C:
+                resBR(3, &(registers->h));
+                return 2;
+                break;
+
+            case 0x9D:
+                resBR(3, &(registers->l));
+                return 2;
+                break;
+
+            case 0x9E:
+                resBHl(3);
+                return 4;
+                break;
+
+            case 0x9F:
+                resBR(3, &(registers->a));
+                return 2;
+                break;
+
+            case 0xA0:
+                resBR(4, &(registers->b));
+                return 2;
+                break;
+
+            case 0xA1:
+                resBR(4, &(registers->c));
+                return 2;
+                break;
+
+            case 0xA2:
+                resBR(4, &(registers->d));
+                return 2;
+                break;
+
+            case 0xA3:
+                resBR(4, &(registers->e));
+                return 2;
+                break;
+
+            case 0xA4:
+                resBR(4, &(registers->h));
+                return 2;
+                break;
+
+            case 0xA5:
+                resBR(4, &(registers->l));
+                return 2;
+                break;
+
+            case 0xA6:
+                resBHl(4);
+                return 4;
+                break;
+
+            case 0xA7:
+                resBR(4, &(registers->a));
+                return 2;
+                break;
+
+            case 0xA8:
+                resBR(5, &(registers->b));
+                return 2;
+                break;
+
+            case 0xA9:
+                resBR(5, &(registers->c));
+                return 2;
+                break;
+
+            case 0xAA:
+                resBR(5, &(registers->d));
+                return 2;
+                break;
+
+            case 0xAB:
+                resBR(5, &(registers->e));
+                return 2;
+                break;
+
+            case 0xAC:
+                resBR(5, &(registers->h));
+                return 2;
+                break;
+
+            case 0xAD:
+                resBR(5, &(registers->l));
+                return 2;
+                break;
+
+            case 0xAE:
+                resBHl(5);
+                return 4;
+                break;
+
+            case 0xAF:
+                resBR(5, &(registers->a));
+                return 2;
+                break;
+
+            case 0xB0:
+                resBR(6, &(registers->b));
+                return 2;
+                break;
+
+            case 0xB1:
+                resBR(6, &(registers->c));
+                return 2;
+                break;
+
+            case 0xB2:
+                resBR(6, &(registers->d));
+                return 2;
+                break;
+
+            case 0xB3:
+                resBR(6, &(registers->e));
+                return 2;
+                break;
+
+            case 0xB4:
+                resBR(6, &(registers->h));
+                return 2;
+                break;
+
+            case 0xB5:
+                resBR(6, &(registers->l));
+                return 2;
+                break;
+
+            case 0xB6:
+                resBHl(6);
+                return 4;
+                break;
+
+            case 0xB7:
+                resBR(6, &(registers->a));
+                return 2;
+                break;
+
+            case 0xB8:
+                resBR(7, &(registers->b));
+                return 2;
+                break;
+
+            case 0xB9:
+                resBR(7, &(registers->c));
+                return 2;
+                break;
+
+            case 0xBA:
+                resBR(7, &(registers->d));
+                return 2;
+                break;
+
+            case 0xBB:
+                resBR(7, &(registers->e));
+                return 2;
+                break;
+
+            case 0xBC:
+                resBR(7, &(registers->h));
+                return 2;
+                break;
+
+            case 0xBD:
+                resBR(7, &(registers->l));
+                return 2;
+                break;
+
+            case 0xBE:
+                resBHl(7);
+                return 4;
+                break;
+
+            case 0xBF:
+                resBR(7, &(registers->a));
+                return 2;
+                break;
+
+            case 0xC0:
+                setBR(0, &(registers->b));
+                return 2;
+                break;
+
+            case 0xC1:
+                setBR(0, &(registers->c));
+                return 2;
+                break;
+
+            case 0xC2:
+                setBR(0, &(registers->d));
+                return 2;
+                break;
+
+            case 0xC3:
+                setBR(0, &(registers->e));
+                return 2;
+                break;
+
+            case 0xC4:
+                setBR(0, &(registers->h));
+                return 2;
+                break;
+
+            case 0xC5:
+                setBR(0, &(registers->l));
+                return 2;
+                break;
+
+            case 0xC6:
+                setBHl(0);
+                return 4;
+                break;
+
+            case 0xC7:
+                setBR(0, &(registers->a));
+                return 2;
+                break;
+
+            case 0xC8:
+                setBR(1, &(registers->b));
+                return 2;
+                break;
+
+            case 0xC9:
+                setBR(1, &(registers->c));
+                return 2;
+                break;
+
+            case 0xCA:
+                setBR(1, &(registers->d));
+                return 2;
+                break;
+
+            case 0xCB:
+                setBR(1, &(registers->e));
+                return 2;
+                break;
+
+            case 0xCC:
+                setBR(1, &(registers->h));
+                return 2;
+                break;
+
+            case 0xCD:
+                setBR(1, &(registers->l));
+                return 2;
+                break;
+
+            case 0xCE:
+                setBHl(1);
+                return 4;
+                break;
+
+            case 0xCF:
+                setBR(1, &(registers->a));
+                return 2;
+                break;
+
+            case 0xD0:
+                setBR(2, &(registers->b));
+                return 2;
+                break;
+
+            case 0xD1:
+                setBR(2, &(registers->c));
+                return 2;
+                break;
+
+            case 0xD2:
+                setBR(2, &(registers->d));
+                return 2;
+                break;
+
+            case 0xD3:
+                setBR(2, &(registers->e));
+                return 2;
+                break;
+
+            case 0xD4:
+                setBR(2, &(registers->h));
+                return 2;
+                break;
+
+            case 0xD5:
+                setBR(2, &(registers->l));
+                return 2;
+                break;
+
+            case 0xD6:
+                setBHl(2);
+                return 4;
+                break;
+
+            case 0xD7:
+                setBR(2, &(registers->a));
+                return 2;
+                break;
+
+            case 0xD8:
+                setBR(3, &(registers->b));
+                return 2;
+                break;
+
+            case 0xD9:
+                setBR(3, &(registers->c));
+                return 2;
+                break;
+
+            case 0xDA:
+                setBR(3, &(registers->d));
+                return 2;
+                break;
+
+            case 0xDB:
+                setBR(3, &(registers->e));
+                return 2;
+                break;
+
+            case 0xDC:
+                setBR(3, &(registers->h));
+                return 2;
+                break;
+
+            case 0xDD:
+                setBR(3, &(registers->l));
+                return 2;
+                break;
+
+            case 0xDE:
+                setBHl(3);
+                return 4;
+                break;
+
+            case 0xDF:
+                setBR(3, &(registers->a));
+                return 2;
+                break;
+
+            case 0xE0:
+                setBR(4, &(registers->b));
+                return 2;
+                break;
+
+            case 0xE1:
+                setBR(4, &(registers->c));
+                return 2;
+                break;
+
+            case 0xE2:
+                setBR(4, &(registers->d));
+                return 2;
+                break;
+
+            case 0xE3:
+                setBR(4, &(registers->e));
+                return 2;
+                break;
+
+            case 0xE4:
+                setBR(4, &(registers->h));
+                return 2;
+                break;
+
+            case 0xE5:
+                setBR(4, &(registers->l));
+                return 2;
+                break;
+
+            case 0xE6:
+                setBHl(4);
+                return 4;
+                break;
+
+            case 0xE7:
+                setBR(4, &(registers->a));
+                return 2;
+                break;
+
+            case 0xE8:
+                setBR(5, &(registers->b));
+                return 2;
+                break;
+
+            case 0xE9:
+                setBR(5, &(registers->c));
+                return 2;
+                break;
+
+            case 0xEA:
+                setBR(5, &(registers->d));
+                return 2;
+                break;
+
+            case 0xEB:
+                setBR(5, &(registers->e));
+                return 2;
+                break;
+
+            case 0xEC:
+                setBR(5, &(registers->h));
+                return 2;
+                break;
+
+            case 0xED:
+                setBR(5, &(registers->l));
+                return 2;
+                break;
+
+            case 0xEE:
+                setBHl(5);
+                return 4;
+                break;
+
+            case 0xEF:
+                setBR(5, &(registers->a));
+                return 2;
+                break;
+
+            case 0xF0:
+                setBR(6, &(registers->b));
+                return 2;
+                break;
+
+            case 0xF1:
+                setBR(6, &(registers->c));
+                return 2;
+                break;
+
+            case 0xF2:
+                setBR(6, &(registers->d));
+                return 2;
+                break;
+
+            case 0xF3:
+                setBR(6, &(registers->e));
+                return 2;
+                break;
+
+            case 0xF4:
+                setBR(6, &(registers->h));
+                return 2;
+                break;
+
+            case 0xF5:
+                setBR(6, &(registers->l));
+                return 2;
+                break;
+
+            case 0xF6:
+                setBHl(6);
+                return 4;
+                break;
+
+            case 0xF7:
+                setBR(6, &(registers->a));
+                return 2;
+                break;
+
+            case 0xF8:
+                setBR(7, &(registers->b));
+                return 2;
+                break;
+
+            case 0xF9:
+                setBR(7, &(registers->c));
+                return 2;
+                break;
+
+            case 0xFA:
+                setBR(7, &(registers->d));
+                return 2;
+                break;
+
+            case 0xFB:
+                setBR(7, &(registers->e));
+                return 2;
+                break;
+
+            case 0xFC:
+                setBR(7, &(registers->h));
+                return 2;
+                break;
+
+            case 0xFD:
+                setBR(7, &(registers->l));
+                return 2;
+                break;
+
+            case 0xFE:
+                setBHl(7);
+                return 4;
+                break;
+
+            case 0xFF:
+                setBR(7, &(registers->a));
+                return 2;
+                break;
             
             default:
                 break;
@@ -1678,15 +2638,10 @@ int Instructions::execute(uint8_t instruction){
 
 // Basic Instructions
 void Instructions::halt() { //????????????????????????????????
-    //da capire bene
-    if(interrupt->isIMEset()){
-
-    }
 }
 
 void Instructions::stop() {
-    //non lo so da capire meglio 
-    //https://gbdev.io/pandocs/Reducing_Power_Consumption.html#using-the-stop-instruction
+    uint8_t param = readNext8Bit();
 
 }
 
@@ -2582,9 +3537,29 @@ void Instructions::srlHl() {
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb);
 }
 
-void Instructions::bitBR(uint8_t *reg) {}
-void Instructions::bitBHl() {}
-void Instructions::resBR(uint8_t *reg) {}
-void Instructions::resBHl() {}
-void Instructions::setBR(uint8_t *reg) {}
-void Instructions::setBHl() {}
+void Instructions::bitBR(uint8_t bit, uint8_t *reg) {
+    registers->setFlag(RegistersFlags::ZERO_FLAG, ((*reg) & (1 << bit)) == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+}
+
+void Instructions::bitBHl(uint8_t bit) {
+    registers->setFlag(RegistersFlags::ZERO_FLAG, ((memory->read(registers->hl)) & (1 << bit)) == 0);
+    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+}
+
+void Instructions::resBR(uint8_t bit, uint8_t *reg) {
+    *reg &= ~(1 << bit);
+}
+
+void Instructions::resBHl(uint8_t bit) {
+    memory->write(registers->hl, (memory->read(registers->hl) & ~(1 << bit)));
+}
+
+void Instructions::setBR(uint8_t bit, uint8_t *reg) {
+    *reg |= (1 << bit);
+}
+void Instructions::setBHl(uint8_t bit) {
+    memory->write(registers->hl, (memory->read(registers->hl) | (1 << bit)));
+}
