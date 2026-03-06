@@ -71,6 +71,10 @@ void Memory::write(uint16_t address, uint8_t value){
     if(address >=0xFF80 && address <= 0xFFFE){
         hRam[address%0x80] = value;
     }
+
+    if(address == 0xFFFF){
+        interruptEnableRegister = value;
+    }
 }
 
 uint8_t Memory::read(uint16_t address){
@@ -125,5 +129,10 @@ uint8_t Memory::read(uint16_t address){
         return hRam[address%0x80];
     }
 
+    if(address == 0xFFFF){
+        return interruptEnableRegister;
+    }
+
+    return -1;
     
 }

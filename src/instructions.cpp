@@ -25,7 +25,6 @@ uint8_t Instructions::readNext8Bit(){
     return immediate;
 }
 
-// DA IMPLEMENTARE I CICLI CORRETTI PER OGNI ISTRUZIONE...
 int Instructions::execute(uint8_t instruction){
 
     switch (instruction){
@@ -2650,7 +2649,7 @@ void Instructions::di() {
 }
 
 void Instructions::ei() {
-    interrupt->enableIME();
+    interrupt->scheduleEnableIME();
 }
 
 // Control flow

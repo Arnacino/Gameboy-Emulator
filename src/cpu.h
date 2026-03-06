@@ -11,8 +11,9 @@ class CPU {
         Registers* registers;
         Interrupt* interrupt;
         Instructions* instructions;
-        int step(uint16_t pc);
+        int step();
         void loop();
+        int handleInterrupt(uint8_t address, uint8_t bit);
         bool running = false;
     public:
         CPU(const char* filepath);
