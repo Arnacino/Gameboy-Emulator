@@ -14,6 +14,7 @@ class CPU {
         int step();
         void loop();
         int handleInterrupt(uint8_t address, uint8_t bit);
+        int handleTima(uint8_t tac, int timerCycles);
         bool running = false;
     public:
         CPU(const char* filepath);

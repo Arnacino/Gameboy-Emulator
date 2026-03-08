@@ -310,7 +310,7 @@ int Instructions::execute(uint8_t instruction){
         
     case 0x35: //DEC (HL)
         decHl();
-        return 2;
+        return 3;
         break;
         
     case 0x36: //LD (HL), n
@@ -1443,7 +1443,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x46:
                 bitBHl(0);
-                return 4;
+                return 3;
                 break;
 
             case 0x47:
@@ -1483,7 +1483,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x4E:
                 bitBHl(1);
-                return 4;
+                return 3;
                 break;
 
             case 0x4F:
@@ -1523,7 +1523,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x56:
                 bitBHl(2);
-                return 4;
+                return 3;
                 break;
 
             case 0x57:
@@ -1563,7 +1563,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x5E:
                 bitBHl(3);
-                return 4;
+                return 3;
                 break;
 
             case 0x5F:
@@ -1603,7 +1603,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x66:
                 bitBHl(4);
-                return 4;
+                return 3;
                 break;
 
             case 0x67:
@@ -1643,7 +1643,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x6E:
                 bitBHl(5);
-                return 4;
+                return 3;
                 break;
 
             case 0x6F:
@@ -1683,7 +1683,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x76:
                 bitBHl(6);
-                return 4;
+                return 3;
                 break;
 
             case 0x77:
@@ -1723,7 +1723,7 @@ int Instructions::execute(uint8_t instruction){
 
             case 0x7E:
                 bitBHl(7);
-                return 4;
+                return 3;
                 break;
 
             case 0x7F:

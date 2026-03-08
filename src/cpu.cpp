@@ -33,12 +33,60 @@ int CPU::handleInterrupt(uint8_t address, uint8_t bit){
     return 5;
 }
 
+int CPU::handleTima(uint8_t tac, int timerCycles){
+
+    int timesToIncrement = 0;
+
+    /*
+     * qui bisogna fare in modo di controllare quanti cicli sono passati tra una istruzione e l'altra controllando la variabile cycles,
+     * e in base al valore di tac bisogna sommare (controllando tac e il numero di cicli). Il resto teoricamente è già giusto
+    */
+    if((tac & 0x03) == 0x00){
+        if(timerCycles >= 256){
+            timesToIncrement = timerCycles / 256;
+            timerCycles = timerCycles % 256;
+        }
+    }else if((tac & 0x03) == 0x03){
+        if(timerCycles >= 64){
+            timesToIncrement = timerCycles / 64;
+            timerCycles = timerCycles % 64;
+        }
+    }else if((tac & 0x03) == 0x02){
+        if(timerCycles >= 16){
+            timesToIncrement = timerCycles / 16;
+            timerCycles = timerCycles % 16;
+        }
+    }else if((tac & 0x03) == 0x01){
+        if(timerCycles >= 4){
+            timesToIncrement = timerCycles / 4;
+            timerCycles = timerCycles % 4;
+        }
+    }
+    if(timesToIncrement > 0){
+        uint16_t newTima = memory->read(0xFF05) + timesToIncrement;
+        if(newTima > 0xFF){
+            memory->write(0xFF05, memory->read(0xFF06));
+            //interrupt
+            memory->write(0xFF0F, memory->read(0xFF0F) | 0x4);
+        }else{
+            memory->write(0xFF05, newTima);
+        }
+    }
+
+    return timerCycles;
+
+}
+
 void CPU::loop(){
     bool running = true;
     int cycles = 0;
+    int temp = 0;
+    int timerCycles = 0;
 
     while(running){
-        cycles += step();
+        temp = step();
+        cycles += temp;
+        timerCycles += temp;
 
         interrupt->updateIME();
 
@@ -47,20 +95,36 @@ void CPU::loop(){
             uint8_t ieRegister = memory->read(0xFFFF); 
 
             if((ieRegister & ifRegister) & 0x1){
-                cycles += handleInterrupt(0x40, 0xFE);
+                temp = handleInterrupt(0x40, 0xFE);
+                cycles += temp;
+                timerCycles += temp;
 
             }else if((ieRegister & ifRegister) & 0x2){
-                cycles += handleInterrupt(0x48, 0xFD);
+                temp = handleInterrupt(0x48, 0xFD);
+                cycles += temp;
+                timerCycles += temp;
 
             }else if((ieRegister & ifRegister) & 0x4){
-                cycles += handleInterrupt(0x50, 0xFB);
+                temp = handleInterrupt(0x50, 0xFB);
+                cycles += temp;
+                timerCycles += temp;
 
             }else if((ieRegister & ifRegister) & 0x8){
-                cycles += handleInterrupt(0x58, 0xF7);
+                temp = handleInterrupt(0x58, 0xF7);
+                cycles += temp;
+                timerCycles += temp;
 
             }else if((ieRegister & ifRegister) & 0x10){
-                cycles += handleInterrupt(0x60, 0xEF);
+                temp = handleInterrupt(0x60, 0xEF);
+                cycles += temp;
+                timerCycles += temp;
             }
+        }
+
+        //TIMA
+        uint8_t tac = memory->read(0xFF07);
+        if(tac & 0x4){
+            timerCycles = handleTima(tac, timerCycles);
         }
         
         //debug BLARRG
