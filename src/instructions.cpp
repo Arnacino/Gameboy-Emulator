@@ -2636,7 +2636,14 @@ int Instructions::execute(uint8_t instruction){
 }
 
 // Basic Instructions
-void Instructions::halt() { //????????????????????????????????
+void Instructions::halt() { 
+    if(interrupt->isIMEset()){
+        interrupt->setHalted(true);
+    }else if((memory->read(0xFF0F) & memory->read(0xFFFF)) == 0){
+        interrupt->setHalted(true);
+    }else if((memory->read(0xFF0F) & memory->read(0xFFFF)) != 0){
+        registers->pc--;
+    }
 }
 
 void Instructions::stop() {

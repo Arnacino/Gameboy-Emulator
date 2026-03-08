@@ -6,9 +6,18 @@ class Interrupt
 private:
     bool IME = false;
     bool pendingIME = false;
+    bool halted = false;
 public:
     void enableIME(){
         this->IME = true;
+    }
+
+    void setHalted(bool condition){
+        halted = condition;
+    }
+
+    bool isHalted(){
+        return halted;
     }
 
     void disableIME(){

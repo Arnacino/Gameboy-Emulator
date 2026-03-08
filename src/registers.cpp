@@ -16,28 +16,6 @@ void Registers::setFlag(uint8_t flag, bool value) {
     }
 }
 
-void Registers::printRegisters() {
-    std::cout << "AF: 0x" << std::hex << af << std::endl;
-    std::cout << "A: 0x" << std::hex << unsigned(a) << std::endl;
-    std::cout << "F: 0x" << std::hex << unsigned(f) << std::endl;
-    
-    std::cout << "BC: 0x" << std::hex << bc << std::endl;
-    std::cout << "B: 0x" << std::hex << unsigned(b) << std::endl;
-    std::cout << "C: 0x" << std::hex << unsigned(c) << std::endl;
-    
-    std::cout << "DE: 0x" << std::hex << de << std::endl;
-    std::cout << "D: 0x" << std::hex << unsigned(d) << std::endl; 
-    std::cout << "E: 0x" << std::hex << unsigned(e) << std::endl;
-    
-    std::cout << "HL: 0x" << std::hex << hl << std::endl;
-    std::cout << "H: 0x" << std::hex << unsigned(h) << std::endl;
-    std::cout << "L: 0x" << std::hex << unsigned(l) << std::endl;
-    
-    std::cout << "SP: 0x" << std::hex << sp << std::endl;
-    std::cout << "PC: 0x" << std::hex << pc << std::endl;
-    
-}
-
 void Registers::printRegistersBit() {
     // 8-bit registers
     std::bitset<8> aBit(a);
@@ -56,32 +34,3 @@ void Registers::printRegistersBit() {
     std::bitset<16> hlBit(hl);
     std::bitset<16> spBit(sp);
     std::bitset<16> pcBit(pc);
-
-    // Print 16-bit pairs
-    std::cout << "AF: 0b" << afBit << std::endl;
-    std::cout << "BC: 0b" << bcBit << std::endl;
-    std::cout << "DE: 0b" << deBit << std::endl;
-    std::cout << "HL: 0b" << hlBit << std::endl;
-    
-    // Print 8-bit registers
-    std::cout << "A: 0b" << aBit << std::endl;
-    std::cout << "F: 0b" << fBit << std::endl;
-    std::cout << "B: 0b" << bBit << std::endl;
-    std::cout << "C: 0b" << cBit << std::endl;
-    std::cout << "D: 0b" << dBit << std::endl;
-    std::cout << "E: 0b" << eBit << std::endl;
-    std::cout << "H: 0b" << hBit << std::endl;
-    std::cout << "L: 0b" << lBit << std::endl;
-
-    // Print special registers
-    std::cout << "SP: 0b" << spBit << std::endl;
-    std::cout << "PC: 0b" << pcBit << std::endl;
-}
-
-void Registers::printFlags(){
-        std::cout << "Flags:" << std::endl;
-        std::cout << "Z: " << isFlagSet(RegistersFlags::ZERO_FLAG) << std::endl;
-        std::cout << "N: " << isFlagSet(RegistersFlags::SUBTRACTION_FLAG) << std::endl;  
-        std::cout << "H: " << isFlagSet(RegistersFlags::HALF_CARRY_FLAG) << std::endl;
-        std::cout << "C: " << isFlagSet(RegistersFlags::CARRY_FLAG) << std::endl;
-}

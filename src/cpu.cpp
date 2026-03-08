@@ -29,6 +29,7 @@ int CPU::step(){
 int CPU::handleInterrupt(uint8_t address, uint8_t bit){
     memory->write(0xFF0F, memory->read(0xFF0F) & bit);
     interrupt->disableIME(); 
+    interrupt->setHalted(false);
     instructions->rst(address);
     return 5;
 }
@@ -37,10 +38,6 @@ int CPU::handleTima(uint8_t tac, int timerCycles){
 
     int timesToIncrement = 0;
 
-    /*
-     * qui bisogna fare in modo di controllare quanti cicli sono passati tra una istruzione e l'altra controllando la variabile cycles,
-     * e in base al valore di tac bisogna sommare (controllando tac e il numero di cicli). Il resto teoricamente è già giusto
-    */
     if((tac & 0x03) == 0x00){
         if(timerCycles >= 256){
             timesToIncrement = timerCycles / 256;
@@ -84,9 +81,17 @@ void CPU::loop(){
     int timerCycles = 0;
 
     while(running){
-        temp = step();
-        cycles += temp;
-        timerCycles += temp;
+        if(!interrupt->isHalted()){
+            temp = step();
+            cycles += temp;
+            timerCycles += temp;
+        }else{
+            cycles++;
+            timerCycles++;
+            if((memory->read(0xFF0F) & memory->read(0xFFFF) & 0x1F) != 0){
+                interrupt->setHalted(false);
+            }
+        }
 
         interrupt->updateIME();
 
