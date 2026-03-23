@@ -1,5 +1,5 @@
 #include "ppu.h"
 
-ppu::ppu(/* args */){}
+PPU::PPU(/* args */){}
 
-ppu::~ppu(){}
+PPU::~PPU(){}

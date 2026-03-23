@@ -13,10 +13,14 @@ add_library(emulator_lib
     src/registers.cpp
     src/app.cpp
     src/ppu.cpp
+    src/sdldisplay.cpp
 )
 
-# Esponi gli header della cartella src
-target_include_directories(emulator_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(emulator_lib
+PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
+PRIVATE ${SDL2_SOURCE_DIR}/include
+)
+target_link_libraries(emulator_lib PUBLIC SDL2-static)
 
 # ---- Eseguibile principale ----
 add_executable(GameboyEmulator src/main.cpp)
@@ -32,6 +36,3 @@ FetchContent_Declare(
     GIT_TAG release-2.28.5
 )
 FetchContent_MakeAvailable(SDL2)
-
-target_include_directories(GameboyEmulator PRIVATE ${SDL2_SOURCE_DIR}/include)
-target_link_libraries(GameboyEmulator PRIVATE SDL2-static)

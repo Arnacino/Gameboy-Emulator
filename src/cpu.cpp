@@ -73,12 +73,11 @@ int CPU::handleTima(uint8_t tac, int timerCycles){
 }
 
 void CPU::loop(){
-    bool running = true;
     int cycles = 0;
     int temp = 0;
     int timerCycles = 0;
 
-    while(running){
+    if(running){
         if(!interrupt->isHalted()){
             temp = step();
             cycles += temp;
@@ -138,8 +137,4 @@ void CPU::loop(){
         }
 
     }
-}
-
-void CPU::run(){
-    loop();
 }
