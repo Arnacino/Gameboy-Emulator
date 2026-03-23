@@ -11,6 +11,8 @@ add_library(emulator_lib
     src/instructions.cpp
     src/memory.cpp
     src/registers.cpp
+    src/app.cpp
+    src/ppu.cpp
 )
 
 # Esponi gli header della cartella src
@@ -33,13 +35,3 @@ FetchContent_MakeAvailable(SDL2)
 
 target_include_directories(GameboyEmulator PRIVATE ${SDL2_SOURCE_DIR}/include)
 target_link_libraries(GameboyEmulator PRIVATE SDL2-static)
-
-# Fetch Catch2
-FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v3.4.0
-)
-FetchContent_MakeAvailable(Catch2)
-
-include(Catch)

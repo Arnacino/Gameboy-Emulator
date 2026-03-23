@@ -1,4 +1,7 @@
 #include "instructions.h"
+#include "registers.h"
+#include "memory.h"
+#include "interrupt.h"
 #include <iostream>
 
 Instructions::Instructions(Registers *registers, Memory *memory, Interrupt *interrupt) {

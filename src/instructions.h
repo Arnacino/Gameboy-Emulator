@@ -1,9 +1,11 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
-#include <stdint.h>
-#include "registers.h"
-#include "memory.h"
-#include "interrupt.h"
+#include <cstdint>
+
+class Registers;
+class Interrupt;
+class Instructions;
+class Memory;
 
 class Instructions
 {

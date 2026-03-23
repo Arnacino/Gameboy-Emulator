@@ -1,9 +1,11 @@
 #ifndef CPU_H
 #define CPU_H
-#include "memory.h"
-#include "registers.h"
-#include "interrupt.h"
-#include "instructions.h"
+#include <cstdint>
+
+class Memory;
+class Registers;
+class Interrupt;
+class Instructions;
 
 class CPU {
     private:
@@ -17,7 +19,7 @@ class CPU {
         int handleTima(uint8_t tac, int timerCycles);
         bool running = false;
     public:
-        CPU(const char* filepath);
+        CPU(Memory* memory, Registers* registers, Instructions* instructions, Interrupt* interrupt);
         void run();
     };
 

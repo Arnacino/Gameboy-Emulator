@@ -3,12 +3,10 @@
 #include "registers.h"
 #include "interrupt.h"
 #include "instructions.h"
+#include <iostream>
 
-CPU::CPU(const char* filepath){
-    memory = new Memory(filepath);
-    registers = new Registers();
-    interrupt = new Interrupt();
-    instructions = new Instructions(registers, memory, interrupt);
+CPU::CPU(Memory* memory, Registers* registers, Instructions* instructions, Interrupt* interrupt)
+ : memory(memory), registers(registers), instructions(instructions), interrupt(interrupt)  {
     
     registers->pc = 0x0100;
     registers->sp = 0xFFFE;
@@ -85,7 +83,7 @@ void CPU::loop(){
             temp = step();
             cycles += temp;
             timerCycles += temp;
-        }else{
+        } else {
             cycles++;
             timerCycles++;
             if((memory->read(0xFF0F) & memory->read(0xFFFF) & 0x1F) != 0){
