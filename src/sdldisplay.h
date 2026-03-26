@@ -10,16 +10,18 @@ public:
     ~SDLDisplay();
 
     bool init(int scale = 4);
-    bool processEvents();
-    void clear();
-    void present();
-    void shutdown();
-
+    bool loop();
+    void setFrameBuffer(const uint32_t* buffer);
+    
 private:
     SDL_Window* window = nullptr;
     SDL_Event event;
     SDL_Renderer* renderer = nullptr;
     bool initialized = false;
+    bool processEvents();
+    void shutdown();
+    void present();
+    void clear();
 };
 
 #endif

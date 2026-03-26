@@ -13,13 +13,16 @@ class CPU {
         Registers* registers;
         Interrupt* interrupt;
         Instructions* instructions;
-        int step();
-        int handleInterrupt(uint8_t address, uint8_t bit);
-        int handleTima(uint8_t tac, int timerCycles);
+        int executeCoreCycle();
+        int handleInterrupt();
+        void handleTima(int cycles);
         bool running = false;
+        int divCounter = 0;
+        int timaCounter = 0;
+        void debugPrints();
     public:
         CPU(Memory* memory, Registers* registers, Instructions* instructions, Interrupt* interrupt);
-        void loop();
+        int step();
         void setRunning(bool state){running = state;}
     };
 

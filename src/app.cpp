@@ -9,21 +9,31 @@
 
 App::App(const char* filepath) {
     display = new SDLDisplay();
-    memory = new Memory(filepath); 
+    memory = new Memory(filepath);
     registers = new Registers(); 
     interrupt = new Interrupt();
     instructions = new Instructions(registers, memory, interrupt);
     cpu = new CPU(memory, registers, instructions, interrupt);  
-    ppu = new PPU();
+    ppu = new PPU(memory);
     }
 
-App::~App(){}
+App::~App(){
+    delete display;
+    delete memory;
+    delete registers;
+    delete interrupt;
+    delete instructions;
+    delete cpu;
+    delete ppu;
+}
 
 void App::run(){
+    int cycles = 0;
     display->init();
+    cpu->setRunning(true);
     while(true){
-        cpu->setRunning(true);
-        cpu->loop();
+        cycles = cpu->step();
+        ppu->update(cycles);
+        display->setFrameBuffer(ppu->getFramebuffer());
     }
-
 }
