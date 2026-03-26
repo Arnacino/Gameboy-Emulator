@@ -31,9 +31,10 @@ void App::run(){
     int cycles = 0;
     display->init();
     cpu->setRunning(true);
-    while(true){
+    bool shouldRun = true;
+    while(shouldRun){
         cycles = cpu->step();
         ppu->update(cycles);
-        display->setFrameBuffer(ppu->getFramebuffer());
+        //display->setFrameBuffer(ppu->getFramebuffer());
     }
 }

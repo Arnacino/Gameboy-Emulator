@@ -16,8 +16,8 @@ class CPU {
         int executeCoreCycle();
         int handleInterrupt();
         void handleTima(int cycles);
+        void handleDiv(int cycles);
         bool running = false;
-        int divCounter = 0;
         int timaCounter = 0;
         void debugPrints();
     public:

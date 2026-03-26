@@ -23,7 +23,7 @@ bool SDLDisplay::init(int scale) {
         return false;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if(!renderer){
         std::cout << "Error creating renderer: " << SDL_GetError()  << '\n';
         return false;
@@ -109,5 +109,4 @@ void SDLDisplay::shutdown() {
 
 void SDLDisplay::setFrameBuffer(const uint32_t* buffer){
     //qualcosa qualcosa texture qualcosa qualcosa
-    processEvents();
 }
