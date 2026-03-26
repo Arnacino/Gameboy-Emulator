@@ -7,6 +7,8 @@
 #include "ppu.h"
 #include "sdldisplay.h"
 
+static constexpr int FRAMETIME = 17556;
+
 App::App(const char* filepath) {
     display = new SDLDisplay();
     memory = new Memory(filepath);
@@ -29,12 +31,19 @@ App::~App(){
 
 void App::run(){
     int cycles = 0;
-    display->init();
+    if(!display->init()){
+        return;
+    }
     cpu->setRunning(true);
     bool shouldRun = true;
     while(shouldRun){
-        cycles = cpu->step();
-        ppu->update(cycles);
-        //display->setFrameBuffer(ppu->getFramebuffer());
+        int frameCycles = 0;
+        while(frameCycles < FRAMETIME){
+            cycles = cpu->step();
+            frameCycles += cycles;
+            ppu->update(cycles * 4);
+        }
+        display->setFrameBuffer(ppu->getFramebuffer());
+        shouldRun = display->loop();
     }
 }

@@ -9,9 +9,8 @@ class Memory
     uint8_t read(uint16_t address);
     void write(uint16_t address, uint8_t content);
     bool loadRom(const char* filepath);
-    void incrementDiv();
     void tickDiv(int tCycles);
-
+    
     Memory(const char* filepath){
         if(!loadRom(filepath)){
             std::cout << "ROM is not valid or path is wrong" << std::endl;
@@ -19,8 +18,9 @@ class Memory
             std::cout<< "ROM loaded successfully" << std::endl;
         }
     }
-
+    
     private:
+    void incrementDiv();
     int divCounter = 0;
     uint8_t rom00[0x4000] = {}; //fixed ROM bank 00
     uint8_t rom01[0x4000] = {}; //not fixed ROM bank 01-nn

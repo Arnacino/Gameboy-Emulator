@@ -36,11 +36,12 @@ int CPU::handleInterrupt(){
         return 0;
     }
     
-    uint8_t bit, address;
+    uint8_t bit = 0;
+    uint16_t address = 0;
     
     uint8_t ifRegister = memory->read(0xFF0F); 
     uint8_t ieRegister = memory->read(0xFFFF); 
-    uint8_t pending = ifRegister & ieRegister;
+    uint8_t pending = (ifRegister & ieRegister) & 0x1F;
     
     if(pending == 0){
         return 0;
@@ -61,6 +62,8 @@ int CPU::handleInterrupt(){
     }else if(pending & 0x10){
         bit = 0xEF;
         address = 0x60;              
+    }else{
+        return 0;
     }
 
     memory->write(0xFF0F, memory->read(0xFF0F) & bit);

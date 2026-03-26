@@ -23,7 +23,7 @@ bool Memory::loadRom(const char* filepath){
 
 void Memory::write(uint16_t address, uint8_t value){
 
-     //rom 00
+/*      //rom 00
     if(address >= 0x0000 && address <= 0x3FFF){
         rom00[address] = value;
     }
@@ -31,6 +31,11 @@ void Memory::write(uint16_t address, uint8_t value){
     //rom 01
     if(address >= 0x4000 && address <= 0x7FFF){
         rom01[address%0x4000] = value;
+    } */
+
+    //TODO
+    if(address >= 0x0000 && address <= 0x7FFF){
+        return;
     }
 
     //vram

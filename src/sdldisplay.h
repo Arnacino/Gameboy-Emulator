@@ -17,6 +17,8 @@ private:
     SDL_Window* window = nullptr;
     SDL_Event event;
     SDL_Renderer* renderer = nullptr;
+    SDL_Texture* texture = nullptr;
+    int scale;
     bool initialized = false;
     bool processEvents();
     void shutdown();

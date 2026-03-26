@@ -29,6 +29,18 @@ bool SDLDisplay::init(int scale) {
         return false;
     }
 
+    texture = SDL_CreateTexture(
+        renderer, 
+        SDL_PIXELFORMAT_ARGB8888,
+        SDL_TEXTUREACCESS_STATIC,
+        GAMEBOY_WIDTH,
+        GAMEBOY_HEIGHT
+    );
+    if(!texture){
+        std::cout << "Error creating renderer: " << SDL_GetError()  << '\n';
+        return false;
+    }
+
     initialized = true;
     return initialized;
 }
@@ -79,10 +91,13 @@ bool SDLDisplay::processEvents() {
 }
 
 bool SDLDisplay::loop() {
+    if(!processEvents()){
+        return false;
+    }
     clear();
-    bool shouldContinue = processEvents();
+    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
     present();
-    return shouldContinue;
+    return true;
 }
 
 void SDLDisplay::clear() {
@@ -99,14 +114,16 @@ void SDLDisplay::present() {
 
 void SDLDisplay::shutdown() {
     if (!initialized) return;
-    SDL_DestroyWindow(window);
+    SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     SDL_Quit();
     window = nullptr;
     renderer = nullptr;
+    texture = nullptr;
     initialized = false;
 }
 
 void SDLDisplay::setFrameBuffer(const uint32_t* buffer){
-    //qualcosa qualcosa texture qualcosa qualcosa
+    SDL_UpdateTexture(texture, NULL, buffer, 160*sizeof(uint32_t));  
 }
