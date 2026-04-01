@@ -1,5 +1,7 @@
 #include "ppu.h"
 #include "memory.h"
+#include "ppu_mode.h"
+#include <algorithm>
 
 static constexpr int GAMEBOY_WIDTH = 160;
 static constexpr int GAMEBOY_HEIGHT = 144;
@@ -14,7 +16,7 @@ PPU::~PPU(){
 
 
 uint16_t PPU::getTileDataByte(uint16_t address){
-    return ((memory->read(address) << 8) | memory->read(address + 0x01));
+    return ((memory->rawRead(address) << 8) | memory->rawRead(address + 0x01));
 }
 
 //renderizza 8 pixel di un tile
@@ -30,32 +32,69 @@ void PPU::renderTileRow(int x, int y, uint16_t address){
     }
 }
 
-void PPU::update(int cycles){
-    cycleCount += cycles;
-    while(cycleCount >= 456){
-        uint8_t ly = memory->rawRead(0xFF44);
-        
-        //se in Vblank non vogliamo nuove linee
-        if(ly < GAMEBOY_HEIGHT){
-            renderScanline();
-        }
-        cycleCount -= 456;
-        ++ly;
+void PPU::update(int dotCycles){
+    cycleCount += dotCycles;
+    while(true){
+        switch (currentMode){
+            case PPUMode::OamScan: {
+                if(cycleCount < 80) return;
+                cycleCount -= 80;
+                currentMode = PPUMode::Drawing;
+                memory->setPPUMode(currentMode);
+                break;
+            }
 
-        if(ly > 143 && ly < 154){
-            //vblank interrupt
-            memory->rawWrite(0xFF0F, memory->rawRead(0xFF0F) | 0x1);
-        }else if(ly == 154){
-            ly = 0;
+            case PPUMode::Drawing: {
+                if(cycleCount < 172) return;
+                cycleCount -= 172;
+                renderScanline();
+                currentMode = PPUMode::HBlank;
+                memory->setPPUMode(currentMode);
+                break;
+            }
+               
+            case PPUMode::HBlank: {
+                if(cycleCount < 204) return;
+                cycleCount -= 204;
+                uint8_t ly = memory->rawRead(0xFF44);
+                ly++;
+                memory->rawWrite(0xFF44, ly);
+                if(ly == 144){
+                    currentMode = PPUMode::VBlank;
+                    memory->setPPUMode(currentMode);
+                    memory->rawWrite(0xFF0F, memory->rawRead(0xFF0F) | 0x01);
+                }else{
+                    currentMode = PPUMode::OamScan;
+                    memory->setPPUMode(currentMode);
+                }
+                break;
+            }
+               
+            case PPUMode::VBlank: {
+                if(cycleCount < 456) return;
+                cycleCount -= 456;
+                uint8_t ly = memory->rawRead(0xFF44);
+                ly++;
+
+                if(ly > 153){
+                    ly = 0;
+                    currentMode = PPUMode::OamScan;
+                    memory->setPPUMode(currentMode);
+
+                }
+                memory->rawWrite(0xFF44, ly);
+                break;
+            }
+
+            default:
+                break;
         }
-        
-        memory->rawWrite(0xFF44, ly);
     }
 }
 
 //renderizza una riga DI PIXEL!!
 void PPU::renderScanline(){
-    uint8_t ly = memory->read(0xFF44);
+    uint8_t ly = memory->rawRead(0xFF44);
     //ly rappresenta a quale y dello schermo sono, 
     //faccio diviso 8 per capire a quale tile corrisponde
     int tileRow = ly / 8;
@@ -69,7 +108,7 @@ void PPU::renderScanline(){
         //devo usare. Il valore che ottengo leggendo questo indirizzo si usa per trovare
         //l'address finale dei tile.
         uint16_t mapAddr = 0x9800 + tileRow * 32 + tileCol;
-        uint8_t tileID = memory->read(mapAddr);
+        uint8_t tileID = memory->rawRead(mapAddr);
         //calcolo l'indirizzo finale del tile grazie all'ID ottenuto prima
         uint16_t address = 0x8000 + tileID * 16 + rowInsideTile * 2;
 

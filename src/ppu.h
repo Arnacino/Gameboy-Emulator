@@ -4,12 +4,15 @@
 
 class Memory;
 
+enum class PPUMode : uint8_t;
+
 class PPU
 {
 private:
     Memory* memory;
     uint32_t* framebuffer;
     int cycleCount = 0;
+    PPUMode currentMode = static_cast<PPUMode>(2); // 2 = OAMSCAN
     static constexpr uint32_t palette[4] = {
         0xFFFFFFFF,  // color index 0 = bianco
         0xFFAAAAAA,  // color index 1 = grigio chiaro
@@ -25,7 +28,7 @@ private:
     PPU(Memory* memory);
     ~PPU();
     
-    void update(int cycles);
+    void update(int dotCycles);
     const uint32_t* getFramebuffer() const { return framebuffer; }
 };
 

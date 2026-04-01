@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "ppu_mode.h"
 #include <fstream>
 #include <cstring>
 
@@ -21,6 +22,10 @@ bool Memory::loadRom(const char* filepath){
 
 }
 
+void Memory::setPPUMode(PPUMode mode){
+    this->mode = mode;
+}
+
 void Memory::write(uint16_t address, uint8_t value){
 
      //rom 00
@@ -35,7 +40,9 @@ void Memory::write(uint16_t address, uint8_t value){
 
     //vram
     if(address >= 0x8000 && address <= 0x9FFF){
-        vram[address%0x2000] = value;
+        if(mode != PPUMode::OamScan){
+            vram[address%0x2000] = value;
+        }
     }
 
     //external ram
@@ -59,7 +66,9 @@ void Memory::write(uint16_t address, uint8_t value){
 
     //object attribute memory
     if(address >= 0xFE00 && address <= 0xFE9F){
-        oam[address%0x100] = value;
+        if(mode != PPUMode::OamScan && mode !=PPUMode::Drawing){
+            oam[address%0x100] = value;
+        }
     }
 
     //ioregisters
@@ -169,7 +178,10 @@ uint8_t Memory::read(uint16_t address){
 
     //vram
     if(address >= 0x8000 && address <= 0x9FFF){
-        return vram[address%0x2000];
+        if(mode !=PPUMode::Drawing){
+            return vram[address%0x2000];
+        }
+        return 0xFF;
     }
 
     //external ram
@@ -194,7 +206,10 @@ uint8_t Memory::read(uint16_t address){
 
     //object attribute memory
     if(address >= 0xFE00 && address <= 0xFE9F){
-        return oam[address%0x100];
+        if(mode != PPUMode::OamScan && mode !=PPUMode::Drawing){
+            return oam[address%0x100];
+        }
+        return 0xFF;
     }
 
     //ioregisters

@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <iostream>
 
+enum class PPUMode : uint8_t;
+
 class Memory
 {
     public: 
@@ -12,6 +14,7 @@ class Memory
     void rawWrite(uint16_t address, uint8_t content);
     bool loadRom(const char* filepath);
     void tickDiv(int tCycles);
+    void setPPUMode(PPUMode mode);
     
     Memory(const char* filepath){
         if(!loadRom(filepath)){
@@ -24,6 +27,7 @@ class Memory
     private:
     void incrementDiv();
     int divCounter = 0;
+    PPUMode mode = static_cast<PPUMode>(0);
     uint8_t rom00[0x4000] = {}; //fixed ROM bank 00
     uint8_t rom01[0x4000] = {}; //not fixed ROM bank 01-nn
     uint8_t vram[0x2000] = {};
