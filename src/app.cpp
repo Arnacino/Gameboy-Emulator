@@ -6,6 +6,8 @@
 #include "instructions.h"
 #include "ppu.h"
 #include "sdldisplay.h"
+#include <chrono>
+#include <thread>
 
 static constexpr int FRAMETIME = 17556;
 
@@ -36,7 +38,16 @@ void App::run(){
     }
     cpu->setRunning(true);
     bool shouldRun = true;
+
+    using clock = std::chrono::steady_clock;
+    const auto frameDuration = std::chrono::microseconds(16742);
+
+    auto nextFrame = clock::now();
+
     while(shouldRun){
+        nextFrame += frameDuration;
+
+        //game logic
         int frameCycles = 0;
         while(frameCycles < FRAMETIME){
             cycles = cpu->step();
@@ -45,5 +56,7 @@ void App::run(){
         }
         display->setFrameBuffer(ppu->getFramebuffer());
         shouldRun = display->loop();
+
+        std::this_thread::sleep_until(nextFrame);
     }
 }

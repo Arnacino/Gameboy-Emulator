@@ -33,7 +33,7 @@ void PPU::renderTileRow(int x, int y, uint16_t address){
 void PPU::update(int cycles){
     cycleCount += cycles;
     while(cycleCount >= 456){
-        uint8_t ly = memory->read(0xFF44);
+        uint8_t ly = memory->rawRead(0xFF44);
         
         //se in Vblank non vogliamo nuove linee
         if(ly < GAMEBOY_HEIGHT){
@@ -42,13 +42,14 @@ void PPU::update(int cycles){
         cycleCount -= 456;
         ++ly;
 
-        if(ly == 144){
-            // vblank interrupt
+        if(ly > 143 && ly < 154){
+            //vblank interrupt
+            memory->rawWrite(0xFF0F, memory->rawRead(0xFF0F) | 0x1);
         }else if(ly == 154){
             ly = 0;
         }
         
-        memory->write(0xFF44, ly);
+        memory->rawWrite(0xFF44, ly);
     }
 }
 

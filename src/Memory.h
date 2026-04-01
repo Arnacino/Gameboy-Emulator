@@ -7,7 +7,9 @@ class Memory
 {
     public: 
     uint8_t read(uint16_t address);
+    uint8_t rawRead(uint16_t address);
     void write(uint16_t address, uint8_t content);
+    void rawWrite(uint16_t address, uint8_t content);
     bool loadRom(const char* filepath);
     void tickDiv(int tCycles);
     
