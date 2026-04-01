@@ -26,6 +26,9 @@ class Memory
     
     private:
     void incrementDiv();
+    void LYCCompare();
+    uint8_t readRaw(uint16_t address);
+    void writeRaw(uint16_t address, uint8_t value);
     int divCounter = 0;
     PPUMode mode = static_cast<PPUMode>(0);
     uint8_t rom00[0x4000] = {}; //fixed ROM bank 00
