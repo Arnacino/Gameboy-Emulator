@@ -15,24 +15,50 @@ PPU::~PPU(){
 }
 
 
-uint16_t PPU::getTileDataByte(uint16_t address){
-    return ((memory->rawRead(address) << 8) | memory->rawRead(address + 0x01));
-}
+void PPU::updateStatReg(){
+    uint8_t stat = memory->rawRead(0xFF41);
+    const uint8_t ly = memory->rawRead(0xFF44);
+    const uint8_t lyc = memory->rawRead(0xFF45);
 
-//renderizza 8 pixel di un tile
-void PPU::renderTileRow(int x, int y, uint16_t address){
-    uint16_t tileMemory = getTileDataByte(address);
-    //prendo i pixel singoli da tileMemory
-    for(int i = 0; i < 8; ++i){
-        uint8_t bit0 = (tileMemory >> (7 - i)) & 1;
-        uint8_t bit1 = (tileMemory >> (15 - i)) & 1;
-        uint8_t colorIndex = (bit1 << 1) | bit0;
-        framebuffer[y * GAMEBOY_WIDTH + x] = palette[colorIndex];
-        ++x;
+    stat = static_cast<uint8_t>((stat & 0xFC) | static_cast<uint8_t>(currentMode));
+
+    const bool lycMatch = (ly == lyc);
+    if (lycMatch) {
+        stat |= 0x04;
+    } else {
+        stat &= static_cast<uint8_t>(~0x04);
     }
+
+    memory->rawWrite(0xFF41, stat);
+    // Build STAT interrupt line from enabled sources
+    const bool mode0Req = (currentMode == PPUMode::HBlank)  && ((stat & 0x08) != 0); // bit 3
+    const bool mode1Req = (currentMode == PPUMode::VBlank)  && ((stat & 0x10) != 0); // bit 4
+    const bool mode2Req = (currentMode == PPUMode::OamScan) && ((stat & 0x20) != 0); // bit 5
+    const bool lycReq   = lycMatch                          && ((stat & 0x40) != 0); // bit 6
+
+    const bool statIrqLine = mode0Req || mode1Req || mode2Req || lycReq;
+
+    // Rising edge detect: request LCD STAT interrupt (IF bit 1)
+    if (!prevStatIrqLine && statIrqLine) {
+        memory->rawWrite(0xFF0F, static_cast<uint8_t>(memory->rawRead(0xFF0F) | 0x02));
+    }
+
+    prevStatIrqLine = statIrqLine;
 }
 
 void PPU::update(int dotCycles){
+    
+    uint8_t lcdc = memory->rawRead(0xFF40);
+    
+    if((lcdc & 0x80) == 0){
+        cycleCount = 0;
+        currentMode = PPUMode::HBlank;
+        memory->setPPUMode(currentMode);
+        memory->rawWrite(0xFF44, 0); 
+        updateStatReg();
+        return;
+    }
+    
     cycleCount += dotCycles;
     while(true){
         switch (currentMode){
@@ -41,6 +67,7 @@ void PPU::update(int dotCycles){
                 cycleCount -= 80;
                 currentMode = PPUMode::Drawing;
                 memory->setPPUMode(currentMode);
+                updateStatReg();
                 break;
             }
 
@@ -50,6 +77,7 @@ void PPU::update(int dotCycles){
                 renderScanline();
                 currentMode = PPUMode::HBlank;
                 memory->setPPUMode(currentMode);
+                updateStatReg();
                 break;
             }
                
@@ -62,11 +90,12 @@ void PPU::update(int dotCycles){
                 if(ly == 144){
                     currentMode = PPUMode::VBlank;
                     memory->setPPUMode(currentMode);
-                    memory->rawWrite(0xFF0F, memory->rawRead(0xFF0F) | 0x01);
+                    memory->rawWrite(0xFF0F, memory->rawRead(0xFF0F) | 0x01); //interrupt vblank
                 }else{
                     currentMode = PPUMode::OamScan;
                     memory->setPPUMode(currentMode);
                 }
+                updateStatReg();
                 break;
             }
                
@@ -80,9 +109,9 @@ void PPU::update(int dotCycles){
                     ly = 0;
                     currentMode = PPUMode::OamScan;
                     memory->setPPUMode(currentMode);
-
                 }
                 memory->rawWrite(0xFF44, ly);
+                updateStatReg();
                 break;
             }
 
@@ -92,27 +121,60 @@ void PPU::update(int dotCycles){
     }
 }
 
-//renderizza una riga DI PIXEL!!
+
+
 void PPU::renderScanline(){
+    uint8_t lcdc = memory->rawRead(0xFF40);
     uint8_t ly = memory->rawRead(0xFF44);
-    //ly rappresenta a quale y dello schermo sono, 
-    //faccio diviso 8 per capire a quale tile corrisponde
-    int tileRow = ly / 8;
 
-    //questo rappresenta quale riga sto usando all'interno della tile
-    //essendo essa composta di 8 righe di pixel
-    int rowInsideTile = ly % 8;
-    
-    for(int tileCol = 0; tileCol < 20; ++tileCol){
-        //gli indirizzi a partire da 0x9800 sono gli indirizzi che mi dicono quale tile
-        //devo usare. Il valore che ottengo leggendo questo indirizzo si usa per trovare
-        //l'address finale dei tile.
-        uint16_t mapAddr = 0x9800 + tileRow * 32 + tileCol;
+    // riempi la scanline con colore 0
+    if ((lcdc & 0x01) == 0) {
+        for (int x = 0; x < 160; ++x) {
+            framebuffer[ly * GAMEBOY_WIDTH + x] = palette[0];
+        }
+        return;
+    }
+
+    uint16_t bgMapBase = (lcdc & 0x08) ? 0x9C00 : 0x9800;
+    bool unsignedTiles = (lcdc & 0x10) != 0;
+
+    uint8_t scx = memory->rawRead(0xFF43);
+    uint8_t scy = memory->rawRead(0xFF42);
+
+    for (int x = 0; x < 160; ++x) {
+        uint8_t bgX = static_cast<uint8_t>(x + scx);
+        uint8_t bgY = static_cast<uint8_t>(ly + scy);
+
+        uint8_t tileCol = bgX / 8;
+        uint8_t tileRow = bgY / 8;
+        uint8_t inTileX = bgX % 8;
+        uint8_t inTileY = bgY % 8;
+        
+        uint16_t mapAddr = bgMapBase + tileRow * 32 + tileCol;
         uint8_t tileID = memory->rawRead(mapAddr);
-        //calcolo l'indirizzo finale del tile grazie all'ID ottenuto prima
-        uint16_t address = 0x8000 + tileID * 16 + rowInsideTile * 2;
 
-        renderTileRow(tileCol * 8, ly, address);
+
+        uint16_t tileRowAddr;
+        if(unsignedTiles){
+            tileRowAddr = 0x8000 + tileID * 16 + inTileY * 2;
+        }else{
+            int8_t signedID = static_cast<int8_t>(tileID);
+            tileRowAddr = 0x9000 + signedID * 16 + inTileY * 2;
+        }
+
+        uint8_t lowByte = memory->rawRead(tileRowAddr);
+        uint8_t highByte = memory->rawRead(tileRowAddr + 1);
+        
+        int bit = 7 - inTileX;
+        uint8_t bit0 = (lowByte >> bit) & 1;
+        uint8_t bit1 = (highByte >> bit) & 1;
+        uint8_t colorIndex = static_cast<uint8_t>((bit1 << 1) | bit0);
+
+        uint8_t bgp = memory->rawRead(0xFF47);
+        // 2 bit per colore: color 0 -> bit 1:0, color 1 -> bit 3:2, ...
+        uint8_t shade = (bgp >> (colorIndex * 2)) & 0x03;
+        framebuffer[ly * GAMEBOY_WIDTH + x] = palette[shade];
+
     }
 
 }

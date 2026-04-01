@@ -55,10 +55,12 @@ uint8_t Memory::readRaw(uint16_t address){
         return wRam00[address%0x1000];
     if(address >= 0xD000 && address <= 0xDFFF)
         return wRam01[address%0x1000];
-    if(address >= 0xF000 && address <= 0xFDFF)
+    if(address >= 0xE000 && address <= 0xFDFF)
         return echoRam[address%0x1E00];
     if(address >= 0xFE00 && address <= 0xFE9F)
         return oam[address%0x100];
+    if(address == 0xFF00)
+        return static_cast<uint8_t>(0xC0 | (IORegisters[0x00] & 0x30) | 0x0F);
     if(address >= 0xFF00 && address <= 0xFF7F)
         return IORegisters[address%0x100];
     if(address >= 0xFF80 && address <= 0xFFFE)
@@ -70,10 +72,12 @@ uint8_t Memory::readRaw(uint16_t address){
 
 void Memory::writeRaw(uint16_t address, uint8_t value){
     if(address >= 0x0000 && address <= 0x3FFF){
-        rom00[address] = value;
+        // rom00[address] = value;
+        return;
     }
     else if(address >= 0x4000 && address <= 0x7FFF){
-        rom01[address%0x4000] = value;
+        // rom01[address%0x4000] = value;
+        return;
     }
     else if(address >= 0x8000 && address <= 0x9FFF){
         vram[address%0x2000] = value;
@@ -90,11 +94,17 @@ void Memory::writeRaw(uint16_t address, uint8_t value){
         if(address <= 0xDDFF)
             echoRam[address%0x1E00] = value;
     }
+    else if(address >= 0xE000 && address <= 0xFDFF){
+        echoRam[address % 0x1E00] = value;
+    }
     else if(address >= 0xFE00 && address <= 0xFE9F){
         oam[address%0x100] = value;
     }
     else if(address >= 0xFF00 && address <= 0xFF7F){
-        if(address == 0xFF04){
+        if(address == 0xFF00){
+            IORegisters[address%0x100] = static_cast<uint8_t>(0xC0 | (value & 0x30) | 0x0F);
+        }
+        else if(address == 0xFF04){
             IORegisters[address%0x100] = 0;
             divCounter = 0;
         }
@@ -115,6 +125,12 @@ void Memory::writeRaw(uint16_t address, uint8_t value){
 }
 
 void Memory::write(uint16_t address, uint8_t value){
+
+    //non si scrive dentro ly cpu-side.
+    if(address == 0xFF44){
+        return;
+    }
+
     bool oam = (address >= 0xFE00 && address <= 0xFE9F);
     bool vram = (address >= 0x8000 && address <= 0x9FFF);
     

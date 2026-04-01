@@ -12,6 +12,7 @@ private:
     Memory* memory;
     uint32_t* framebuffer;
     int cycleCount = 0;
+    bool prevStatIrqLine = false;
     PPUMode currentMode = static_cast<PPUMode>(2); // 2 = OAMSCAN
     static constexpr uint32_t palette[4] = {
         0xFFFFFFFF,  // color index 0 = bianco
@@ -23,6 +24,7 @@ private:
     uint16_t getTileDataByte(uint16_t address);
     void renderTileRow(int x, int y, uint16_t address);
     void renderScanline();
+    void updateStatReg();
 
     public:
     PPU(Memory* memory);

@@ -31,8 +31,8 @@ uint8_t Instructions::readNext8Bit(){
 int Instructions::execute(uint8_t instruction){
 
     switch (instruction){
-    
-    default:
+
+    case 0x00: //NOP
         return 1;
         break;
 
@@ -2373,9 +2373,6 @@ int Instructions::execute(uint8_t instruction){
                 setBR(7, &(registers->a));
                 return 2;
                 break;
-            
-            default:
-                break;
         }
         break;
     } 
@@ -2635,6 +2632,8 @@ int Instructions::execute(uint8_t instruction){
         return 4;
         break;
     }
+    
+    std::cout << "ERRORE: opcode non esistente ?" << '\n';
     return 0;
 }
 

@@ -22,6 +22,20 @@ class Memory
         }else{
             std::cout<< "ROM loaded successfully" << std::endl;
         }
+
+        rawWrite(0xFF00, 0xCF);
+        rawWrite(0xFF40, 0x91); //LCDC
+        rawWrite(0xFF41, 0x85); //STAT
+        rawWrite(0xFF42, 0x00);
+        rawWrite(0xFF43, 0x00);
+        rawWrite(0xFF44, 0x00);
+        rawWrite(0xFF45, 0x00);
+        rawWrite(0xFF47, 0xFC); //BGP
+        rawWrite(0xFF4A, 0x00); //WY
+        rawWrite(0xFF4B, 0x00); //WX
+        rawWrite(0xFF0F, 0xE1); //IF
+        rawWrite(0xFFFF, 0x00); //IE
+        
     }
     
     private:
