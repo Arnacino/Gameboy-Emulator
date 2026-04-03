@@ -114,9 +114,6 @@ void PPU::update(int dotCycles){
                 updateStatReg();
                 break;
             }
-
-            default:
-                break;
         }
     }
 }
@@ -170,10 +167,7 @@ void PPU::renderScanline(){
         uint8_t bit1 = (highByte >> bit) & 1;
         uint8_t colorIndex = static_cast<uint8_t>((bit1 << 1) | bit0);
 
-        uint8_t bgp = memory->rawRead(0xFF47);
-        // 2 bit per colore: color 0 -> bit 1:0, color 1 -> bit 3:2, ...
-        uint8_t shade = (bgp >> (colorIndex * 2)) & 0x03;
-        framebuffer[ly * GAMEBOY_WIDTH + x] = palette[shade];
+        framebuffer[ly * GAMEBOY_WIDTH + x] = palette[colorIndex];
 
     }
 

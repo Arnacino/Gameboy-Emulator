@@ -103,16 +103,19 @@ void Memory::writeRaw(uint16_t address, uint8_t value){
     else if(address >= 0xFF00 && address <= 0xFF7F){
         if(address == 0xFF00){
             IORegisters[address%0x100] = static_cast<uint8_t>(0xC0 | (value & 0x30) | 0x0F);
-        }
-        else if(address == 0xFF04){
+        }else if(address == 0xFF04){
             IORegisters[address%0x100] = 0;
             divCounter = 0;
-        }
-        else if(address == 0xFF45 || address == 0xFF44){
+        }else if(address == 0xFF45 || address == 0xFF44){
             IORegisters[address%0x100] = value;
             LYCCompare();
-        }
-        else{
+        }else if(address == 0xFF46){
+            IORegisters[address%0x100] = value;
+            DMAActive = true;
+            DMAIndex = 0;
+            DMATicksLeft = 0;
+            DMASource = (value << 8);
+        }else{
             IORegisters[address%0x100] = value;
         }
     }
@@ -127,12 +130,15 @@ void Memory::writeRaw(uint16_t address, uint8_t value){
 void Memory::write(uint16_t address, uint8_t value){
 
     //non si scrive dentro ly cpu-side.
-    if(address == 0xFF44){
+    if(address == 0xFF44) 
         return;
-    }
 
     bool oam = (address >= 0xFE00 && address <= 0xFE9F);
     bool vram = (address >= 0x8000 && address <= 0x9FFF);
+
+    //durante DMA transfer si accede solo ad HRAM
+    if(DMAActive && oam)
+        return;
     
     if((mode == PPUMode::OamScan && oam) || (mode == PPUMode::Drawing && (oam || vram)))
         return;
@@ -140,7 +146,31 @@ void Memory::write(uint16_t address, uint8_t value){
     writeRaw(address, value);
 }
 
+void Memory::DMATransfer(int cycles){
+
+
+    DMATicksLeft += cycles;
+    while (DMATicksLeft >= 4 && DMAIndex < 0xA0) {
+        oam[DMAIndex] = rawRead(DMASource + DMAIndex);
+        DMATicksLeft -= 4;
+        DMAIndex++;
+    }
+
+    if(DMAIndex == 0xA0){
+        DMAActive = false;
+        DMASource = 0;
+        DMAIndex = 0;
+        return;
+    }
+
+}
+
 void Memory::rawWrite(uint16_t address, uint8_t value){
+    bool oam = (address >= 0xFE00 && address <= 0xFE9F);
+
+    if(DMAActive && oam)
+        return;
+
     writeRaw(address, value);
 }
 
@@ -159,6 +189,9 @@ void Memory::tickDiv(int tCycles){
 uint8_t Memory::read(uint16_t address){
     bool oam = (address >= 0xFE00 && address <= 0xFE9F);
     bool vram = (address >= 0x8000 && address <= 0x9FFF);
+
+    if(DMAActive && oam)
+        return 0xFF;
     
     if((mode == PPUMode::OamScan && oam) || (mode == PPUMode::Drawing && (oam || vram)))
         return 0xFF;
@@ -167,5 +200,10 @@ uint8_t Memory::read(uint16_t address){
 }
 
 uint8_t Memory::rawRead(uint16_t address){
+    bool oam = (address >= 0xFE00 && address <= 0xFE9F);
+
+    if(DMAActive && oam)
+        return 0xFF;
+    
     return readRaw(address);
 }

@@ -15,6 +15,8 @@ class Memory
     bool loadRom(const char* filepath);
     void tickDiv(int tCycles);
     void setPPUMode(PPUMode mode);
+    bool isDMAActive() { return DMAActive; }
+    void DMATransfer(int cycles);
     
     Memory(const char* filepath){
         if(!loadRom(filepath)){
@@ -39,10 +41,6 @@ class Memory
     }
     
     private:
-    void incrementDiv();
-    void LYCCompare();
-    uint8_t readRaw(uint16_t address);
-    void writeRaw(uint16_t address, uint8_t value);
     int divCounter = 0;
     PPUMode mode = static_cast<PPUMode>(0);
     uint8_t rom00[0x4000] = {}; //fixed ROM bank 00
@@ -56,6 +54,15 @@ class Memory
     uint8_t hRam[0x80] = {};
     uint8_t oam[0x100] = {}; //Object Attribute Memory. Contiene gli attributi degli oggetti mostrati a schermo
     uint8_t interruptEnableRegister = 0;
+    bool DMAActive = false;
+    int DMATicksLeft = 0;
+    uint16_t DMASource = 0;
+    uint16_t DMAIndex = 0;
+
+    void incrementDiv();
+    void LYCCompare();
+    uint8_t readRaw(uint16_t address);
+    void writeRaw(uint16_t address, uint8_t value);
     
 };
 

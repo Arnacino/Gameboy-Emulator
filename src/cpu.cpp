@@ -130,6 +130,9 @@ int CPU::step(){
 
     handleTima(cycles);
     handleDiv(cycles);
+    if(memory->isDMAActive()){
+        memory->DMATransfer(cycles);
+    }
 
     debugPrints();
 
