@@ -137,7 +137,7 @@ void Memory::write(uint16_t address, uint8_t value){
     bool vram = (address >= 0x8000 && address <= 0x9FFF);
 
     //durante DMA transfer si accede solo ad HRAM
-    if(DMAActive && oam)
+    if (DMAActive && (address < 0xFF80 || address > 0xFFFE))
         return;
     
     if((mode == PPUMode::OamScan && oam) || (mode == PPUMode::Drawing && (oam || vram)))
@@ -148,8 +148,7 @@ void Memory::write(uint16_t address, uint8_t value){
 
 void Memory::DMATransfer(int cycles){
 
-
-    DMATicksLeft += cycles;
+    DMATicksLeft += cycles * 4;
     while (DMATicksLeft >= 4 && DMAIndex < 0xA0) {
         oam[DMAIndex] = rawRead(DMASource + DMAIndex);
         DMATicksLeft -= 4;
@@ -166,9 +165,8 @@ void Memory::DMATransfer(int cycles){
 }
 
 void Memory::rawWrite(uint16_t address, uint8_t value){
-    bool oam = (address >= 0xFE00 && address <= 0xFE9F);
 
-    if(DMAActive && oam)
+    if (DMAActive && (address < 0xFF80 || address > 0xFFFE))
         return;
 
     writeRaw(address, value);
@@ -190,7 +188,7 @@ uint8_t Memory::read(uint16_t address){
     bool oam = (address >= 0xFE00 && address <= 0xFE9F);
     bool vram = (address >= 0x8000 && address <= 0x9FFF);
 
-    if(DMAActive && oam)
+    if (DMAActive && (address < 0xFF80 || address > 0xFFFE))
         return 0xFF;
     
     if((mode == PPUMode::OamScan && oam) || (mode == PPUMode::Drawing && (oam || vram)))
@@ -200,9 +198,7 @@ uint8_t Memory::read(uint16_t address){
 }
 
 uint8_t Memory::rawRead(uint16_t address){
-    bool oam = (address >= 0xFE00 && address <= 0xFE9F);
-
-    if(DMAActive && oam)
+    if (DMAActive && (address < 0xFF80 || address > 0xFFFE))
         return 0xFF;
     
     return readRaw(address);

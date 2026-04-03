@@ -49,6 +49,7 @@ bool SDLDisplay::processEvents() {
     while(SDL_PollEvent(&event)){
         switch (event.type) {
             case SDL_QUIT:
+                std::cout << "Chiusura Finestra..." << '\n';
                 return false;
 
             case SDL_KEYUP: 
@@ -70,6 +71,11 @@ bool SDLDisplay::processEvents() {
                 break;
 
             case SDL_KEYDOWN: 
+                if ((event.key.keysym.mod & KMOD_ALT) != 0 && event.key.keysym.sym == SDLK_F4) {
+                    std::cout << "Chiusura richiesta con Alt+F4..." << '\n';
+                    return false;
+                }
+
                 switch(event.key.keysym.sym){
                     case SDLK_w:
                         std::cout << "premuto w" << '\n';
@@ -125,5 +131,6 @@ void SDLDisplay::shutdown() {
 }
 
 void SDLDisplay::setFrameBuffer(const uint32_t* buffer){
+    if (!texture) return;
     SDL_UpdateTexture(texture, NULL, buffer, 160*sizeof(uint32_t));  
 }

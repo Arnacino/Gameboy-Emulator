@@ -124,10 +124,10 @@ int CPU::step(){
     }
 
     cycles = executeCoreCycle();
-
-    interrupt->updateIME();
     cycles += handleInterrupt();
 
+    interrupt->updateIME();
+    
     handleTima(cycles);
     handleDiv(cycles);
     if(memory->isDMAActive()){
