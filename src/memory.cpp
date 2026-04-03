@@ -150,7 +150,7 @@ void Memory::DMATransfer(int cycles){
 
     DMATicksLeft += cycles * 4;
     while (DMATicksLeft >= 4 && DMAIndex < 0xA0) {
-        oam[DMAIndex] = rawRead(DMASource + DMAIndex);
+        oam[DMAIndex] = readRaw(DMASource + DMAIndex);
         DMATicksLeft -= 4;
         DMAIndex++;
     }
@@ -165,10 +165,6 @@ void Memory::DMATransfer(int cycles){
 }
 
 void Memory::rawWrite(uint16_t address, uint8_t value){
-
-    if (DMAActive && (address < 0xFF80 || address > 0xFFFE))
-        return;
-
     writeRaw(address, value);
 }
 
@@ -198,8 +194,5 @@ uint8_t Memory::read(uint16_t address){
 }
 
 uint8_t Memory::rawRead(uint16_t address){
-    if (DMAActive && (address < 0xFF80 || address > 0xFFFE))
-        return 0xFF;
-    
     return readRaw(address);
 }
