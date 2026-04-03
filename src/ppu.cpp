@@ -7,15 +7,17 @@ static constexpr int GAMEBOY_WIDTH = 160;
 static constexpr int GAMEBOY_HEIGHT = 144;
 
 PPU::PPU(Memory* memory) :  memory(memory){
-    framebuffer = new uint32_t[160 * 144];
-    OBJframebuffer = new uint32_t[160 * 144];
-    BGframebuffer = new uint32_t[160 * 144];
+    frameBuffer = new uint32_t[160 * 144];
+    OBJFrameBuffer = new uint32_t[160 * 144];
+    BGFrameBuffer = new uint32_t[160 * 144];
+    winFrameBuffer = new uint32_t[160 * 144];
 }
 
 PPU::~PPU(){
-    delete[] framebuffer;
-    delete[] OBJframebuffer;
-    delete[] BGframebuffer;
+    delete[] frameBuffer;
+    delete[] OBJFrameBuffer;
+    delete[] BGFrameBuffer;
+    delete[] winFrameBuffer;
 }
 
 
@@ -172,16 +174,13 @@ void PPU::findSprites(){
 void PPU::renderPixel(){
     const uint8_t lcdc = memory->rawRead(0xFF40);
     const uint8_t ly = memory->rawRead(0xFF44);
-
-    if (ly >= GAMEBOY_HEIGHT) {
-        return;
-    }
-
+    
     uint8_t scx = memory->rawRead(0xFF43);
     uint8_t scy = memory->rawRead(0xFF42);
 
     renderBGPixel(lcdc, ly, scx, scy);
     renderOBJPixel(lcdc, ly);
+    renderWinPixel(lcdc, ly);
 
     mergeBuffers(ly);
 
@@ -190,7 +189,7 @@ void PPU::renderPixel(){
 void PPU::renderOBJPixel(uint8_t lcdc, uint8_t ly){
 
     const int index = ly * GAMEBOY_WIDTH + lx;
-    OBJframebuffer[index] = 0x00000000;
+    OBJFrameBuffer[index] = 0x00000000;
 
     //LCDC bit 1, se spento obj disabilitati
     if((lcdc & 0x02) == 0) return;
@@ -244,7 +243,7 @@ void PPU::renderOBJPixel(uint8_t lcdc, uint8_t ly){
 
             uint8_t paletteIndex = (obp >> (colorIndex * 2)) & 0x03;
 
-            OBJframebuffer[index] = palette[paletteIndex];
+            OBJFrameBuffer[index] = palette[paletteIndex];
             break;
         }
     }
@@ -252,9 +251,11 @@ void PPU::renderOBJPixel(uint8_t lcdc, uint8_t ly){
 
 void PPU::renderBGPixel(uint8_t lcdc, uint8_t ly, uint8_t scx, uint8_t scy){
 
+    const int index = ly * GAMEBOY_WIDTH + lx;
+
     // LCDC bit 0, BG bianco
     if ((lcdc & 0x01) == 0) {
-        BGframebuffer[ly * GAMEBOY_WIDTH + lx] = palette[0];
+        BGFrameBuffer[index] = palette[0];
         return;
     }
 
@@ -293,17 +294,72 @@ void PPU::renderBGPixel(uint8_t lcdc, uint8_t ly, uint8_t scx, uint8_t scy){
     uint8_t bgp = memory->rawRead(0xFF47);
     uint8_t paletteIndex = (bgp >> (colorIndex * 2)) & 0x03;
 
-    BGframebuffer[ly * GAMEBOY_WIDTH + lx] = palette[paletteIndex];
+    BGFrameBuffer[index] = palette[paletteIndex];
 }
 
 void PPU::mergeBuffers(uint8_t ly){
-    if (ly >= GAMEBOY_HEIGHT || lx < 0 || lx >= GAMEBOY_WIDTH) {
-        return;
-    }
 
     const int index = ly * GAMEBOY_WIDTH + lx;
-    framebuffer[index] = BGframebuffer[index];
-    if (OBJframebuffer[index] != 0x00000000) {
-        framebuffer[index] = OBJframebuffer[index];
+    frameBuffer[index] = BGFrameBuffer[index];
+
+    if (winFrameBuffer[index] != 0x00000000) {
+        frameBuffer[index] = winFrameBuffer[index];
     }
+
+    if(OBJFrameBuffer[index] != 0x00000000){
+        frameBuffer[index] = OBJFrameBuffer[index];
+    }
+}
+
+void PPU::renderWinPixel(uint8_t lcdc, uint8_t ly){
+
+    const int index = ly * GAMEBOY_WIDTH + lx;
+    
+    winFrameBuffer[index] = 0x00000000;
+    if ((lcdc & 0x20) == 0) return; 
+
+    uint8_t wx = memory->rawRead(0xFF4B);
+    uint8_t wy = memory->rawRead(0xFF4A);
+
+
+    if (lx + 7 < wx || ly < wy) {
+        // Fuori dal window, il background rimarrà visibile
+        return;
+    }
+    
+    uint16_t tileMapAddr = (lcdc & 0x40) ? 0x9C00 : 0x9800;
+
+    uint8_t winX = lx + 7 - wx;
+    uint8_t winY = ly - wy;
+
+    //LCDC bit 4
+    bool unsignedTiles = (lcdc & 0x10) != 0;
+
+    uint8_t tileCol = winX / 8;
+    uint8_t tileRow = winY / 8;
+    uint8_t inTileX = winX % 8;
+    uint8_t inTileY = winY % 8;
+    
+    uint16_t mapAddr = tileMapAddr + tileRow * 32 + tileCol;
+    uint8_t tileID = memory->rawRead(mapAddr);
+    uint16_t tileRowAddr;
+
+    if(unsignedTiles){
+        tileRowAddr = 0x8000 + tileID * 16 + inTileY * 2;
+    }else{
+        int8_t signedID = static_cast<int8_t>(tileID);
+        tileRowAddr = 0x9000 + signedID * 16 + inTileY * 2;
+    }
+    uint8_t lowByte = memory->rawRead(tileRowAddr);
+    uint8_t highByte = memory->rawRead(tileRowAddr + 1);
+    
+    int bit = 7 - inTileX;
+    uint8_t bit0 = (lowByte >> bit) & 1;
+    uint8_t bit1 = (highByte >> bit) & 1;
+
+    uint8_t colorIndex = static_cast<uint8_t>((bit1 << 1) | bit0);
+    uint8_t bgp = memory->rawRead(0xFF47);
+    uint8_t paletteIndex = (bgp >> (colorIndex * 2)) & 0x03;
+
+    winFrameBuffer[index] = palette[paletteIndex];
 }

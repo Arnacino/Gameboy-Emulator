@@ -54,7 +54,7 @@ void App::run(){
             frameCycles += cycles;
             ppu->update(cycles * 4);
         }
-        display->setFrameBuffer(ppu->getFramebuffer());
+        display->setFrameBuffer(ppu->getFrameBuffer());
         shouldRun = display->loop();
 
         std::this_thread::sleep_until(nextFrame);

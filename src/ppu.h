@@ -13,9 +13,10 @@ class PPU
 {
 private:
     Memory* memory;
-    uint32_t* framebuffer;
-    uint32_t* BGframebuffer;
-    uint32_t* OBJframebuffer;
+    uint32_t* frameBuffer;
+    uint32_t* BGFrameBuffer;
+    uint32_t* OBJFrameBuffer;
+    uint32_t* winFrameBuffer;
     int cycleCount = 0;
     int pipelineDelay = 12;
     int lx = 0;
@@ -43,6 +44,7 @@ private:
     void renderPixel();
     void renderBGPixel(uint8_t lcdc, uint8_t ly, uint8_t scx, uint8_t scy);
     void renderOBJPixel(uint8_t lcdc, uint8_t ly);
+    void renderWinPixel(uint8_t lcdc, uint8_t ly);
     void mergeBuffers(uint8_t ly);
 
     public:
@@ -50,7 +52,7 @@ private:
     ~PPU();
     
     void update(int dotCycles);
-    const uint32_t* getFramebuffer() const { return framebuffer; }
+    const uint32_t* getFrameBuffer() const { return frameBuffer; }
 };
 
 #endif
