@@ -3,21 +3,42 @@
 #include "joypad.h"
 #include <fstream>
 #include <cstring>
+#include <filesystem>
 
 //questo supporta solo ROM fino a 32kb, per ROM più grande serve un MBC o qualcosa del genere
 bool Memory::loadRom(const char* filepath){
-    std::ifstream rom(filepath, std::ios_base::binary | std::ios::in);
+    namespace fs = std::filesystem;
+    const fs::path input(filepath);
+
+    const std::array<fs::path, 7> bases = {
+        fs::current_path(),
+        fs::current_path() / "..",
+        fs::current_path() / ".." / "..",
+        fs::current_path() / ".." / ".." / "..",
+        fs::current_path() / ".." / ".." / ".." / "..",
+        fs::path("."),
+        fs::path("..")
+    };
+
+    std::ifstream rom;
+    for (const auto& base : bases) {
+        const fs::path candidate = input.is_absolute() ? input : (base / input);
+        rom.open(candidate, std::ios::binary | std::ios::in);
+        if (rom.is_open()) {
+            break;
+        }
+        rom.clear();
+    }
+
     if(!rom.is_open()){
         return false;
     }
-    
-    //cancella i contenuti precedenti
+
     std::memset(rom00, 0, sizeof(rom00));
     std::memset(rom01, 0, sizeof(rom01));
-    
+
     rom.read(reinterpret_cast<char*>(rom00), 0x4000);
     rom.read(reinterpret_cast<char*>(rom01), 0x4000);
-
     rom.close();
     return true;
 

@@ -180,6 +180,8 @@ void PPU::renderPixel(){
 
     renderBGPixel(lcdc, ly, scx, scy);
     renderOBJPixel(lcdc, ly);
+
+    //aggiungi penalità di 6 dot
     renderWinPixel(lcdc, ly);
 
     mergeBuffers(ly);

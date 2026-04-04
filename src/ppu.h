@@ -30,6 +30,13 @@ private:
         uint8_t attributes;
     };
 
+    struct PixelFIFO {
+        uint32_t* frameBuffer;
+        uint32_t* palette;
+        bool bgPriority;
+    };
+
+    PixelFIFO fifo = {};
     std::array<SpriteCandidate, 10> sprites{};
     PPUMode currentMode = static_cast<PPUMode>(2); // 2 = OAMSCAN
     static constexpr uint32_t palette[4] = {
