@@ -8,6 +8,7 @@ class Interrupt;
 class Instructions;
 class PPU;
 class SDLDisplay;
+class Joypad;
 
 class App {
 
@@ -19,6 +20,7 @@ private:
     Instructions* instructions;
     Interrupt* interrupt;
     PPU* ppu;
+    Joypad* joypad;
 public:
     App(const char* filepath);
     ~App();

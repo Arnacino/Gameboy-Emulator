@@ -4,9 +4,11 @@
 #include <cstdint>
 #include <SDL2/SDL.h>
 
+class Joypad;
+
 class SDLDisplay {
 public:
-    SDLDisplay();
+    SDLDisplay(Joypad* joypad);
     ~SDLDisplay();
 
     bool init(int scale = 4);
@@ -20,6 +22,8 @@ private:
     SDL_Texture* texture = nullptr;
     int scale;
     bool initialized = false;
+    Joypad* joypad;
+
     bool processEvents();
     void shutdown();
     void present();

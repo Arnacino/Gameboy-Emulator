@@ -1,10 +1,11 @@
 #include "sdldisplay.h"
+#include "joypad.h"
 #include <iostream>
 
 static constexpr int GAMEBOY_WIDTH = 160;
 static constexpr int GAMEBOY_HEIGHT = 144;
 
-SDLDisplay::SDLDisplay() {}
+SDLDisplay::SDLDisplay(Joypad* joypad) : joypad(joypad) {}
 
 SDLDisplay::~SDLDisplay() { shutdown(); }
 
@@ -53,19 +54,30 @@ bool SDLDisplay::processEvents() {
                 return false;
 
             case SDL_KEYUP: 
-            //TODO
                 switch(event.key.keysym.sym){
-                    case SDLK_w:
-                        std::cout << "rilasciato w" << '\n';
+                    case SDLK_UP:
+                        joypad->setKey(JoypadKey::Up, false);
                         break;
-                    case SDLK_a:
-                        std::cout << "rilasciato a" << '\n';
+                    case SDLK_DOWN:
+                        joypad->setKey(JoypadKey::Down, false);
                         break;
-                    case SDLK_s:
-                        std::cout << "rilasciato s" << '\n';
+                    case SDLK_LEFT:
+                        joypad->setKey(JoypadKey::Left, false);
                         break;
-                    case SDLK_d:
-                        std::cout << "rilasciato d" << '\n';
+                    case SDLK_RIGHT:
+                        joypad->setKey(JoypadKey::Right, false);
+                        break;
+                    case SDLK_z:
+                        joypad->setKey(JoypadKey::A, false);
+                        break;
+                    case SDLK_x:
+                        joypad->setKey(JoypadKey::B, false);
+                        break;
+                    case SDLK_TAB:
+                        joypad->setKey(JoypadKey::Start, false);
+                        break;
+                    case SDLK_BACKSPACE:
+                        joypad->setKey(JoypadKey::Select, false);
                         break;
                 }
                 break;
@@ -77,17 +89,29 @@ bool SDLDisplay::processEvents() {
                 }
 
                 switch(event.key.keysym.sym){
-                    case SDLK_w:
-                        std::cout << "premuto w" << '\n';
+                    case SDLK_UP:
+                        joypad->setKey(JoypadKey::Up, true);
                         break;
-                    case SDLK_a:
-                        std::cout << "premuto a" << '\n';
+                    case SDLK_DOWN:
+                        joypad->setKey(JoypadKey::Down, true);
                         break;
-                    case SDLK_s:
-                        std::cout << "premuto s" << '\n';
+                    case SDLK_LEFT:
+                        joypad->setKey(JoypadKey::Left, true);
                         break;
-                    case SDLK_d:
-                        std::cout << "premuto d" << '\n';
+                    case SDLK_RIGHT:
+                        joypad->setKey(JoypadKey::Right, true);
+                        break;
+                    case SDLK_z:
+                        joypad->setKey(JoypadKey::A, true);
+                        break;
+                    case SDLK_x:
+                        joypad->setKey(JoypadKey::B, true);
+                        break;
+                    case SDLK_TAB:
+                        joypad->setKey(JoypadKey::Start, true);
+                        break;
+                    case SDLK_BACKSPACE:
+                        joypad->setKey(JoypadKey::Select, true);
                         break;
                 }
                 break;
@@ -128,6 +152,7 @@ void SDLDisplay::shutdown() {
     renderer = nullptr;
     texture = nullptr;
     initialized = false;
+    delete joypad;
 }
 
 void SDLDisplay::setFrameBuffer(const uint32_t* buffer){

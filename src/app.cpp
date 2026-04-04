@@ -6,14 +6,17 @@
 #include "instructions.h"
 #include "ppu.h"
 #include "sdldisplay.h"
+#include "joypad.h"
 #include <chrono>
+#include <thread>
 #include <thread>
 
 static constexpr int FRAMETIME = 17556;
 
 App::App(const char* filepath) {
-    display = new SDLDisplay();
-    memory = new Memory(filepath);
+    joypad = new Joypad();
+    display = new SDLDisplay(joypad);
+    memory = new Memory(filepath, joypad);
     registers = new Registers(); 
     interrupt = new Interrupt();
     instructions = new Instructions(registers, memory, interrupt);
@@ -29,6 +32,7 @@ App::~App(){
     delete instructions;
     delete cpu;
     delete ppu;
+    delete joypad;
 }
 
 void App::run(){

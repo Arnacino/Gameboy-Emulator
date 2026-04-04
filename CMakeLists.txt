@@ -10,6 +10,7 @@ add_library(emulator_lib
     src/cpu.cpp
     src/instructions.cpp
     src/memory.cpp
+    src/joypad.cpp
     src/registers.cpp
     src/app.cpp
     src/ppu.cpp

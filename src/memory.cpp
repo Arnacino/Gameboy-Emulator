@@ -1,5 +1,6 @@
 #include "memory.h"
 #include "ppu_mode.h"
+#include "joypad.h"
 #include <fstream>
 #include <cstring>
 
@@ -60,7 +61,7 @@ uint8_t Memory::readRaw(uint16_t address){
     if(address >= 0xFE00 && address <= 0xFE9F)
         return oam[address%0x100];
     if(address == 0xFF00)
-        return static_cast<uint8_t>(0xC0 | (IORegisters[0x00] & 0x30) | 0x0F);
+        return joypad->readP1(IORegisters[0x00]);
     if(address >= 0xFF00 && address <= 0xFF7F)
         return IORegisters[address%0x100];
     if(address >= 0xFF80 && address <= 0xFFFE)
@@ -102,7 +103,7 @@ void Memory::writeRaw(uint16_t address, uint8_t value){
     }
     else if(address >= 0xFF00 && address <= 0xFF7F){
         if(address == 0xFF00){
-            IORegisters[address%0x100] = static_cast<uint8_t>(0xC0 | (value & 0x30) | 0x0F);
+            IORegisters[address%0x100] = static_cast<uint8_t>(0xC0 | (value & 0x30));
         }else if(address == 0xFF04){
             IORegisters[address%0x100] = 0;
             divCounter = 0;

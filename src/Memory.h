@@ -5,6 +5,10 @@
 
 enum class PPUMode : uint8_t;
 
+enum class JoypadKey : uint8_t;
+
+class Joypad;
+
 class Memory
 {
     public: 
@@ -17,8 +21,9 @@ class Memory
     void setPPUMode(PPUMode mode);
     bool isDMAActive() { return DMAActive; }
     void DMATransfer(int cycles);
+    void setJoypadKey(JoypadKey key, bool pressed);
     
-    Memory(const char* filepath){
+    Memory(const char* filepath, Joypad* joypad) : joypad(joypad){
         if(!loadRom(filepath)){
             std::cout << "ROM is not valid or path is wrong" << std::endl;
         }else{
@@ -40,6 +45,9 @@ class Memory
         
     }
     
+    ~Memory(){
+    }
+    
     private:
     int divCounter = 0;
     PPUMode mode = static_cast<PPUMode>(0);
@@ -58,6 +66,7 @@ class Memory
     int DMATicksLeft = 0;
     uint16_t DMASource = 0;
     uint16_t DMAIndex = 0;
+    Joypad* joypad;
 
     void incrementDiv();
     void LYCCompare();
