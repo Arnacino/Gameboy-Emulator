@@ -1,5 +1,5 @@
 #include "sdldisplay.h"
-#include "joypad.h"
+#include "../joypad/joypad.h"
 #include <iostream>
 
 static constexpr int GAMEBOY_WIDTH = 160;
@@ -7,9 +7,21 @@ static constexpr int GAMEBOY_HEIGHT = 144;
 
 SDLDisplay::SDLDisplay(Joypad* joypad) : joypad(joypad) {}
 
-SDLDisplay::~SDLDisplay() { shutdown(); }
+SDLDisplay::~SDLDisplay() {
+    if (!initialized) 
+        return;
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    window = nullptr;
+    renderer = nullptr;
+    texture = nullptr;
+    initialized = false;
+}
 
 bool SDLDisplay::init(int scale) {
+    SDL_SetMainReady();
     if(SDL_Init(SDL_INIT_VIDEO) < 0){
         std::cout << "Error initializing SDL: " << SDL_GetError() << '\n';
         return false;
@@ -140,19 +152,6 @@ void SDLDisplay::present() {
     if(renderer){
         SDL_RenderPresent(renderer);
     }
-}
-
-void SDLDisplay::shutdown() {
-    if (!initialized) return;
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    window = nullptr;
-    renderer = nullptr;
-    texture = nullptr;
-    initialized = false;
-    delete joypad;
 }
 
 void SDLDisplay::setFrameBuffer(const uint32_t* buffer){

@@ -1,6 +1,6 @@
 #include "memory.h"
-#include "ppu_mode.h"
-#include "joypad.h"
+#include "../ppu/ppu_mode.h"
+#include "../joypad/joypad.h"
 #include <fstream>
 #include <cstring>
 #include <filesystem>

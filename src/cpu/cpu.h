@@ -20,6 +20,7 @@ class CPU {
         bool running = false;
         int timaCounter = 0;
         void debugPrints();
+        void tickOneMCycle();
     public:
         CPU(Memory* memory, Registers* registers, Instructions* instructions, Interrupt* interrupt);
         int step();

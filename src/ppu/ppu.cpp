@@ -1,5 +1,5 @@
 #include "ppu.h"
-#include "memory.h"
+#include "../memory/memory.h"
 #include "ppu_mode.h"
 #include <algorithm>
 
@@ -185,7 +185,21 @@ void PPU::renderPixel(){
     renderWinPixel(lcdc, ly);
 
     mergeBuffers(ly);
+    
+}
 
+void PPU::mergeBuffers(uint8_t ly){
+
+    const int index = ly * GAMEBOY_WIDTH + lx;
+    frameBuffer[index] = BGFrameBuffer[index];
+
+    if (winFrameBuffer[index] != 0x00000000) {
+        frameBuffer[index] = winFrameBuffer[index];
+    }
+
+    if(OBJFrameBuffer[index] != 0x00000000){
+        frameBuffer[index] = OBJFrameBuffer[index];
+    }
 }
 
 void PPU::renderOBJPixel(uint8_t lcdc, uint8_t ly){
@@ -297,20 +311,6 @@ void PPU::renderBGPixel(uint8_t lcdc, uint8_t ly, uint8_t scx, uint8_t scy){
     uint8_t paletteIndex = (bgp >> (colorIndex * 2)) & 0x03;
 
     BGFrameBuffer[index] = palette[paletteIndex];
-}
-
-void PPU::mergeBuffers(uint8_t ly){
-
-    const int index = ly * GAMEBOY_WIDTH + lx;
-    frameBuffer[index] = BGFrameBuffer[index];
-
-    if (winFrameBuffer[index] != 0x00000000) {
-        frameBuffer[index] = winFrameBuffer[index];
-    }
-
-    if(OBJFrameBuffer[index] != 0x00000000){
-        frameBuffer[index] = OBJFrameBuffer[index];
-    }
 }
 
 void PPU::renderWinPixel(uint8_t lcdc, uint8_t ly){

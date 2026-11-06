@@ -1,6 +1,6 @@
 #include "cpu.h"
-#include "memory.h"
-#include "registers.h"
+#include "../memory/memory.h"
+#include "../memory/registers.h"
 #include "interrupt.h"
 #include "instructions.h"
 #include <iostream>

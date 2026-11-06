@@ -7,7 +7,12 @@ class Memory;
 
 enum class PPUMode : uint8_t;
 
-
+enum class FetcherState : uint8_t {
+    GET_TILE = 0,
+    GET_TILE_DATA0 = 1,
+    GET_TILE_DATA1 = 2,
+    SLEEP = 3
+};
 
 class PPU
 {
@@ -27,16 +32,15 @@ private:
         uint8_t oamX;
         uint8_t oamY;
         uint8_t tileID;
-        uint8_t attributes;
+        uint8_t attributes; 
     };
-
     struct PixelFIFO {
         uint32_t* frameBuffer;
         uint32_t* palette;
-        bool bgPriority;
+        bool bgPriority; 
     };
-
-    PixelFIFO fifo = {};
+    PixelFIFO bgFIFO;     
+    PixelFIFO spriteFIFO;
     std::array<SpriteCandidate, 10> sprites{};
     PPUMode currentMode = static_cast<PPUMode>(2); // 2 = OAMSCAN
     static constexpr uint32_t palette[4] = {
