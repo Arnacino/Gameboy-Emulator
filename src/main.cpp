@@ -11,12 +11,12 @@
 #include <thread>
 
 int main(int, char**) {
-    //char filepath[] = "roms/tests/instr_timing/instr_timing.gb"; // passed
-    // char filepath[] = "roms/tests/cpu_instrs/cpu_instrs.gb"; // passed
-    // char filepath[] = "roms/tests/oam_bug/rom_singles/3-non_causes.gb"; // passed
-    // char filepath[] = "roms/tests/oam_bug/rom_singles/6-timing_no_bug.gb"; // passed
+    char filepath[] = "roms/tests/instr_timing/instr_timing.gb"; 
+    // char filepath[] = "roms/tests/cpu_instrs/cpu_instrs.gb"; 
+    // char filepath[] = "roms/tests/oam_bug/rom_singles/3-non_causes.gb"; 
+    // char filepath[] = "roms/tests/oam_bug/rom_singles/6-timing_no_bug.gb"; 
 
-    char filepath[] = "roms/tests/mem_timing/individual/01-read_timing.gb"; // failed
+    //char filepath[] = "roms/tests/mem_timing/individual/01-read_timing.gb"; // failed
     // char filepath[] = "roms/tests/mem_timing/individual/02-write_timing.gb"; // failed
     // char filepath[] = "roms/tests/mem_timing/individual/03-modify_timing.gb"; // failed
     // char filepath[] = "roms/tests/mem_timing-2/rom_singles/01-read_timing.gb"; // failed
@@ -51,22 +51,23 @@ int main(int, char**) {
 
     static constexpr int FRAMETIME = 17556;
     bool shouldRun = true;
-    int cycles = 0;
 
     using clock = std::chrono::steady_clock;
     const auto frameDuration = std::chrono::microseconds(16742);
     auto nextFrame = clock::now();
+    int cycles = 0;
 
     while (shouldRun) {
         nextFrame += frameDuration;
 
         int frameCycles = 0;
         while (frameCycles < FRAMETIME) {
-            cycles = cpu.step();
-            frameCycles += cycles;
-            ppu.update(cycles * 4);
+            // TODO capire qua come gestire i cicli con gli interrupt
+            cpu.step();
+            frameCycles += 4;
+            ppu.update(4);
+            ++cycles;
         }
-
         display.setFrameBuffer(ppu.getFrameBuffer());
         shouldRun = display.loop();
 

@@ -13,17 +13,27 @@ class CPU {
         Registers* registers;
         Interrupt* interrupt;
         Instructions* instructions;
-        int executeCoreCycle();
-        int handleInterrupt();
-        void handleTima(int cycles);
-        void handleDiv(int cycles);
-        bool running = false;
-        int timaCounter = 0;
+        void executeInstructionCycle();
+        void executeInterruptCycle();
+        void executeHaltCycle();
+        void startInterrupt();
+        bool interruptCanBeAccepted();
+        void fetchInstruction();
+        void tickTima(int cycles);
+        void tickDiv(int cycles);
+        void tickDma(int cycles);
+        void tickPpu(int cycles);
         void debugPrints();
-        void tickOneMCycle();
+
+        bool running = false;
+        bool interruptRunning = false;
+        bool instructionRunning = false;
+        int timaCounter = 0;
+        int instructionCycle = 0;
+        uint8_t currentOpcode = 0;
     public:
         CPU(Memory* memory, Registers* registers, Instructions* instructions, Interrupt* interrupt);
-        int step();
+        void step();
         void setRunning(bool state){running = state;}
     };
 

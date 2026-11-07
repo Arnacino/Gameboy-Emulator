@@ -40,6 +40,17 @@ public:
         }
     }
 
+    enum class InterruptPhase 
+    {
+        None,
+        Acknowledge,
+        PushPcHigh,
+        PushPcLow,
+        Wait,
+        JumpToVector
+    };
 };
+
+
 
 #endif

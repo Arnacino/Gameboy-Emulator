@@ -2,24 +2,11 @@
 #include "../memory/registers.h"
 #include "../memory/memory.h"
 #include "interrupt.h"
-#include <iostream>
 
 Instructions::Instructions(Registers *registers, Memory *memory, Interrupt *interrupt) {
     this->registers = registers;
     this->memory = memory;
     this->interrupt = interrupt;
-}
-
-uint16_t Instructions::readNext16Bit(){
-    uint16_t immediate;
-
-    uint8_t immediateLSB = memory->read(registers->pc);
-    registers->pc++;
-    uint8_t immediateMSB = memory->read(registers->pc);
-    registers->pc++;
-    immediate = (static_cast<uint16_t>(immediateMSB) <<8) | immediateLSB;
-
-    return immediate;
 }
 
 uint8_t Instructions::readNext8Bit(){
@@ -28,2848 +15,2097 @@ uint8_t Instructions::readNext8Bit(){
     return immediate;
 }
 
-int Instructions::execute(uint8_t instruction){
+bool Instructions::execute(uint8_t instruction, int instructionCycle){
+
+    bool condition = false;
 
     switch (instruction){
 
     case 0x00: //NOP
-        return 1;
-        break;
+        return true;
 
     case 0x01: //LD BC, nn
-        loadImR16(&(registers->bc));
-        return 3;
-        break;
+        return loadImR16(&(registers->bc), instructionCycle);
 
     case 0x02: //LD BC, A
-        loadRA(&(registers->bc));
-        return 2;
-        break;
+        return loadRA(&(registers->bc));
 
     case 0x03: // INC BC
-        incR16(&(registers->bc));
-        return 2;
-        break;
+        return incR16(&(registers->bc), instructionCycle);
 
     case 0x04: //INC B
-        incR8(&(registers->b));
-        return 1;
-        break;
+        return incR8(&(registers->b));;
     
     case 0x05: //DEC B
-        decR8(&(registers->b));
-        return 1;
-        break;
+        return decR8(&(registers->b));
         
     case 0x06: // LD B, n
-        loadImR8(&(registers->b));
-        return 2;
-        break;
+        return loadImR8(&(registers->b));
         
     case 0x07: //RLCA (sarebbe come uno shift left però l'ultimo bit diventa il primo)
-        rlca();
-        return 1;
-        break;
+        return rlca();
         
     case 0x08: //LD SP, nn
-        loadSpIm();
-        return 5;
-        break;
+        return loadSpIm(instructionCycle);
         
     case 0x09: //ADD HL, BC
-        addHlR(&(registers->bc));
-        return 2;
-        break;
+        return addHlR(&(registers->bc));
         
     case 0x0A: //LD A, BC
-        loadAR(&(registers->bc));
-        return 2;
-        break;
+        return loadAR(&(registers->bc));
         
     case 0x0B: //DEC BC
-        decR16(&(registers->bc));
-        return 2;
-        break;
+        return decR16(&(registers->bc), instructionCycle);
         
     case 0x0C: //INC C
-        incR8(&(registers->c));
-        return 1;
-        break;
+        return incR8(&(registers->c));
         
     case 0x0D: //DEC C
-        decR8(&(registers->c));
-        return 1;
-        break;
+        return decR8(&(registers->c));
         
     case 0x0E: //LD C, u8
-        loadImR8(&(registers->c));
-        return 2;
-        break;
+        return loadImR8(&(registers->c));
         
     case 0x0F: //RRCA
-        rrca();
-        return 1;
-        break;
+        return rrca();
         
     case 0x10: //STOP
-        stop();
-        return 2;
-        break;
+        return stop();
         
     case 0x11: // LD DE, nn
-        loadImR16(&(registers->de));
-        return 3;
-        break;
+        return loadImR16(&(registers->de), instructionCycle);
 
     case 0x12: // LD DE, A
-        loadRA(&(registers->de));
-        return 2;
-        break;
+        return loadRA(&(registers->de));
 
     case 0x13: // INC DE
-        incR16(&(registers->de));
-        return 2;
-        break;
+        return incR16(&(registers->de), instructionCycle);
 
     case 0x14: // INC D
-        incR8(&(registers->d));
-        return 1;
-        break;
+        return incR8(&(registers->d));
 
     case 0x15: // DEC D
-        decR8(&(registers->d));
-        return 1;
-        break;
+        return decR8(&(registers->d));
 
     case 0x16: // LD D, n
-        loadImR8(&(registers->d));
-        return 2;
-        break;
+        return loadImR8(&(registers->d));
 
     case 0x17: // RLA
-        rla();
-        return 1;
-        break;
+        return rla();
 
     case 0x18: // JR n 
-        jrIm();
-        return 3;
-        break;
+        return jrIm(instructionCycle);
 
     case 0x19: // ADD HL, DE
-        addHlR(&(registers->de));
-        return 2;
-        break;
+        return addHlR(&(registers->de));
 
     case 0x1A: // LD A, DE
-        loadAR(&(registers->de));
-        return 2;
-        break; 
+        return loadAR(&(registers->de));
 
     case 0x1B: // DEC DE
-        decR16(&(registers->de));
-        return 2;
-        break;
+        return decR16(&(registers->de), instructionCycle);
 
     case 0x1C: // INC E
-        incR8(&(registers->e));
-        return 1;
-        break;
+        return incR8(&(registers->e));
 
     case 0x1D: // DEC E
-        decR8(&(registers->e));
-        return 1;
-        break;
+        return decR8(&(registers->e));
 
     case 0x1E: // LD E, n
-        loadImR8(&(registers->e));
-        return 2;
-        break;
+        return loadImR8(&(registers->e));
 
     case 0x1F: // RRA
-        rra();
-        return 1;
-        break;
+        return rra();
 
-    case 0x20: { // JR NZ, n
-        bool condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        jrCIm(condition);
-        if(condition){
-            return 3;
-        }
-        return 2;
-        break;
-    }
-
+    case 0x20:  // JR NZ, n
+        condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return jrCIm(condition, instructionCycle);
+        
     case 0x21: // LD HL, nn
-        loadImR16(&(registers->hl));
-        return 3;
-        break;
+        return loadImR16(&(registers->hl), instructionCycle);
     
     case 0x22: // LD HL+, A
-        loadAHlPlus();
-        return 2;
-        break;
+        return loadAHlPlus();
     
     case 0x23: // INC HL
-        incR16(&(registers->hl));
-        return 2;
-        break;
+        return incR16(&(registers->hl), instructionCycle);
         
     case 0x24: //INC H
-        incR8(&(registers->h));
-        return 1;
-        break;
+        return incR8(&(registers->h));
         
     case 0x25: //DEC H
-        decR8(&(registers->h));
-        return 1;
-        break;
+        return decR8(&(registers->h));
         
     case 0x26: //LD H, n
-        loadImR8(&(registers->h));
-        return 2;
-        break;
+        return loadImR8(&(registers->h));
         
     case 0x27: //DAA
-        daA();
-        return 1;
-        break;
+        return daA();
         
-    case 0x28: {  //JR Z, n
-        bool condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        jrCIm(condition);
-        if(condition){
-            return 3;
-        }
-        return 2;
-        break;
-    }
+    case 0x28:   //JR Z, n
+        condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return jrCIm(condition, instructionCycle);
 
     case 0x29: //ADD HL, HL 
-        addHlR(&(registers->hl));
-        return 2;
-        break;
+        return addHlR(&(registers->hl));
         
     case 0x2A: //LD A, HL+
-        loadHlPlusA();
-        return 2;
-        break;
+        return loadHlPlusA();
         
     case 0x2B: //DEC HL
-        decR16(&(registers->hl));
-        return 2;
-        break;
+        return decR16(&(registers->hl), instructionCycle);
         
     case 0x2C: //INC L
-        incR8(&(registers->l));
-        return 1;
-        break;
+        return incR8(&(registers->l));
         
     case 0x2D: //DEC L
-        decR8(&(registers->l));
-        return 1;
-        break;
+        return decR8(&(registers->l));
         
     case 0x2E: //LD L, n
-        loadImR8(&(registers->l));
-        return 2;
-        break;
+        return loadImR8(&(registers->l));
         
     case 0x2F: //CPL
-        cpA();
-        return 1;
-        break;
+        return cpA();
         
-    case 0x30:{ //JR NC, n
-        bool condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        jrCIm(condition);
-        if (condition){
-            return 3;
-        }
-        return 2;
-        break;
-    }
+    case 0x30: //JR NC, n
+        condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return jrCIm(condition, instructionCycle);
         
     case 0x31: // LD SP, nn
-        loadImR16(&(registers->sp));
-        return 3;
-        break;
+        return loadImR16(&(registers->sp), instructionCycle);
 
     case 0x32: //LD HL-, A
-        loadAHlMinus();
-        return 2;
-        break;
+        return loadAHlMinus();
         
     case 0x33: // INC SP
-        incR16(&(registers->sp));
-        return 2;
-        break;
+        return incR16(&(registers->sp), instructionCycle);
 
     case 0x34: //INC (HL)
-        incHl();
-        return 3;
-        break;
+        return incHl(instructionCycle);
         
     case 0x35: //DEC (HL)
-        decHl();
-        return 3;
-        break;
+        return decHl(instructionCycle);
         
     case 0x36: //LD (HL), n
-        loadImHl();
-        return 3;
-        break;
+        return loadImHl(instructionCycle);
         
     case 0x37: //SCF
-        scf();
-        return 1;
-        break;
+        return scf();
         
-    case 0x38:{ //JR C, n
-        bool condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        jrCIm(condition);
-        if(condition){
-            return 3;
-        }
-        return 2;
-        break;
-    }
+    case 0x38: //JR C, n
+        condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return jrCIm(condition, instructionCycle);
 
     case 0x39: //ADD HL, SP
-        addHlR(&(registers->sp));
-        return 2;
-        break;
+        return addHlR(&(registers->sp));
         
     case 0x3A: //LD A, (HL-)
-        loadHlMinusA();
-        return 2;
-        break;
+        return loadHlMinusA();
         
     case 0x3B: //DEC SP 
-        decR16(&(registers->sp));
-        return 2;
-        break;
+        return decR16(&(registers->sp), instructionCycle);
         
     case 0x3C: //INC A
-        incR8(&(registers->a));
-        return 1;
-        break;
+        return incR8(&(registers->a));
         
     case 0x3D: //DEC A
-        decR8(&(registers->a));
-        return 1;
-        break;
+        return decR8(&(registers->a));
         
     case 0x3E: //LD A, n
-        loadImR8(&(registers->a));
-        return 2;
-        break;
+        return loadImR8(&(registers->a));
         
     case 0x3F: //CCF
-        ccf();
-        return 1;
-        break;
+        return ccf();
         
     case 0x40: //LD B, B
-        loadRR8(&(registers->b), &(registers->b));
-        return 1;
-        break;
+        return loadRR8(&(registers->b), &(registers->b));
     
     case 0x41: //LD B, C
-        loadRR8(&(registers->b), &(registers->c));
-        return 1;
-        break;
+        return loadRR8(&(registers->b), &(registers->c));
     
     case 0x42: //LD B, D
-        loadRR8(&(registers->b), &(registers->d));
-        return 1;
-        break;
+        return loadRR8(&(registers->b), &(registers->d));
     
     case 0x43: //LD B, E
-        loadRR8(&(registers->b), &(registers->e));
-        return 1;
-        break;
+        return loadRR8(&(registers->b), &(registers->e));
     
     case 0x44: //LD B, H
-        loadRR8(&(registers->b), &(registers->h));
-        return 1;
-        break;
+        return loadRR8(&(registers->b), &(registers->h));
     
     case 0x45: //LD B, L
-        loadRR8(&(registers->b), &(registers->l));
-        return 1;
-        break;
+        return loadRR8(&(registers->b), &(registers->l));
     
     case 0x46: //LD B, (HL)
-        loadHlR(&(registers->b));
-        return 2;
-        break;
+        return loadHlR(&(registers->b));
     
     case 0x47: //LD B, A
-        loadRR8(&(registers->b), &(registers->a));
-        return 1;
-        break;
+        return loadRR8(&(registers->b), &(registers->a));
     
     case 0x48: //LD C, B
-        loadRR8(&(registers->c), &(registers->b));
-        return 1;
-        break;
+        return loadRR8(&(registers->c), &(registers->b));
     
     case 0x49: //LD C, C
-        loadRR8(&(registers->c), &(registers->c));
-        return 1;
-        break;
+        return loadRR8(&(registers->c), &(registers->c));
     
     case 0x4A: //LD C, D
-        loadRR8(&(registers->c), &(registers->d));
-        return 1;
-        break;
+        return loadRR8(&(registers->c), &(registers->d));
     
     case 0x4B: //LD C, E
-        loadRR8(&(registers->c), &(registers->e));
-        return 1;
-        break;
+        return loadRR8(&(registers->c), &(registers->e));
     
     case 0x4C: //LD C, H    
-        loadRR8(&(registers->c), &(registers->h));
-        return 1;
-        break;
+        return loadRR8(&(registers->c), &(registers->h));
     
     case 0x4D: //LD C, L
-        loadRR8(&(registers->c), &(registers->l));
-        return 1;
-        break;
+        return loadRR8(&(registers->c), &(registers->l));
     
     case 0x4E: //LD C, (hl)
-        loadHlR(&(registers->c));
-        return 2;
-        break;
+        return loadHlR(&(registers->c));
     
     case 0x4F: //LD C, A
-        loadRR8(&(registers->c), &(registers->a));
-        return 1;
-        break;
+        return loadRR8(&(registers->c), &(registers->a));
         
     case 0x50: //LD D, B
-        loadRR8(&(registers->d), &(registers->b));
-        return 1;
-        break;
+        return loadRR8(&(registers->d), &(registers->b));
     
     case 0x51: //LD D, C
-        loadRR8(&(registers->d), &(registers->c));
-        return 1;
-        break;
+        return loadRR8(&(registers->d), &(registers->c));
     
     case 0x52: //LD D, D
-        loadRR8(&(registers->d), &(registers->d));
-        return 1;
-        break;
+        return loadRR8(&(registers->d), &(registers->d));
     
     case 0x53: //LD D, E
-        loadRR8(&(registers->d), &(registers->e));
-        return 1;
-        break;
+        return loadRR8(&(registers->d), &(registers->e));
     
     case 0x54: //LD D, H    
-        loadRR8(&(registers->d), &(registers->h));
-        return 1;
-        break;
+        return loadRR8(&(registers->d), &(registers->h));
     
     case 0x55: //LD D, L
-        loadRR8(&(registers->d), &(registers->l));
-        return 1;
-        break;
+        return loadRR8(&(registers->d), &(registers->l));
     
     case 0x56: //LD D, (hl)
-        loadHlR(&(registers->d));
-        return 2;
-        break;
+        return loadHlR(&(registers->d));
     
     case 0x57: //LD D, A
-        loadRR8(&(registers->d), &(registers->a));
-        return 1;
-        break;
+        return loadRR8(&(registers->d), &(registers->a));
             
     case 0x58: //LD E, B
-        loadRR8(&(registers->e), &(registers->b));
-        return 1;
-        break;
+        return loadRR8(&(registers->e), &(registers->b));
     
     case 0x59: //LD E, C
-        loadRR8(&(registers->e), &(registers->c));
-        return 1;
-        break;
+        return loadRR8(&(registers->e), &(registers->c));
     
     case 0x5A: //LD E, D
-        loadRR8(&(registers->e), &(registers->d));
-        return 1;
-        break;
+        return loadRR8(&(registers->e), &(registers->d));
     
     case 0x5B: //LD E, E
-        loadRR8(&(registers->e), &(registers->e));
-        return 1;
-        break;
+        return loadRR8(&(registers->e), &(registers->e));
     
     case 0x5C: //LD E, H    
-        loadRR8(&(registers->e), &(registers->h));
-        return 1;
-        break;
+        return loadRR8(&(registers->e), &(registers->h));
     
     case 0x5D: //LD E, L
-        loadRR8(&(registers->e), &(registers->l));
-        return 1;
-        break;
+        return loadRR8(&(registers->e), &(registers->l));
     
     case 0x5E: //LD E, (hl)
-        loadHlR(&(registers->e));
-        return 2;
-        break;
+        return loadHlR(&(registers->e));
     
     case 0x5F: //LD E, A
-        loadRR8(&(registers->e), &(registers->a));
-        return 1;
-        break;
+        return loadRR8(&(registers->e), &(registers->a));
     
     case 0x60: //LD H, B
-        loadRR8(&(registers->h), &(registers->b));
-        return 1;
-        break;
+        return loadRR8(&(registers->h), &(registers->b));
     
     case 0x61: //LD H, C
-        loadRR8(&(registers->h), &(registers->c));
-        return 1;
-        break;
+        return loadRR8(&(registers->h), &(registers->c));
     
     case 0x62: //LD H, D
-        loadRR8(&(registers->h), &(registers->d));
-        return 1;
-        break;
+        return loadRR8(&(registers->h), &(registers->d));
     
     case 0x63: //LD H, E
-        loadRR8(&(registers->h), &(registers->e));
-        return 1;
-        break;
+        return loadRR8(&(registers->h), &(registers->e));
     
     case 0x64: //LD H, H    
-        loadRR8(&(registers->h), &(registers->h));
-        return 1;
-        break;
+        return loadRR8(&(registers->h), &(registers->h));
     
     case 0x65: //LD H, L
-        loadRR8(&(registers->h), &(registers->l));
-        return 1;
-        break;
+        return loadRR8(&(registers->h), &(registers->l));
     
     case 0x66: //LD H, (hl)
-        loadHlR(&(registers->h));
-        return 2;
-        break;
+        return loadHlR(&(registers->h));
     
     case 0x67: //LD H, A
-        loadRR8(&(registers->h), &(registers->a));
-        return 1;
-        break;      
+        return loadRR8(&(registers->h), &(registers->a));
     
     case 0x68: //LD L, B
-        loadRR8(&(registers->l), &(registers->b));
-        return 1;
-        break;      
+        return loadRR8(&(registers->l), &(registers->b));
     
     case 0x69: //LD L, C
-        loadRR8(&(registers->l), &(registers->c));
-        return 1;
-        break;      
+        return loadRR8(&(registers->l), &(registers->c));
     
     case 0x6A: //LD L, D
-        loadRR8(&(registers->l), &(registers->d));
-        return 1;
-        break;      
+        return loadRR8(&(registers->l), &(registers->d));
     
     case 0x6B: //LD L, E
-        loadRR8(&(registers->l), &(registers->e));
-        return 1;
-        break;      
+        return loadRR8(&(registers->l), &(registers->e));
     
     case 0x6C: //LD L, H
-        loadRR8(&(registers->l), &(registers->h));
-        return 1;
-        break;      
+        return loadRR8(&(registers->l), &(registers->h));
     
     case 0x6D: //LD L, L
-        loadRR8(&(registers->l), &(registers->l));
-        return 1;
-        break;      
+        return loadRR8(&(registers->l), &(registers->l));
     
     case 0x6E: //LD L, (HL)
-        loadHlR(&(registers->l));
-        return 2;
-        break;      
+        return loadHlR(&(registers->l));
     
     case 0x6F: //LD L, A
-        loadRR8(&(registers->l), &(registers->a));
-        return 1;
-        break;      
+        return loadRR8(&(registers->l), &(registers->a));
     
     case 0x70: //LD (HL), B
-        loadRHl(&(registers->b));
-        return 2;
-        break;
+        return loadRHl(&(registers->b));
     
     case 0x71: //LD (HL), C
-        loadRHl(&(registers->c));
-        return 2;
-        break;
+        return loadRHl(&(registers->c));
     
     case 0x72: //LD (HL), D
-        loadRHl(&(registers->d));
-        return 2;
-        break;
+        return loadRHl(&(registers->d));
     
     case 0x73: //LD (HL), E
-        loadRHl(&(registers->e));
-        return 2;
-        break;
+        return loadRHl(&(registers->e));
     
     case 0x74: //LD (HL), H    
-        loadRHl(&(registers->h));
-        return 2;
-        break;
+        return loadRHl(&(registers->h));
     
     case 0x75: //LD (HL), L
-        loadRHl(&(registers->l));
-        return 2;
-        break;
+        return loadRHl(&(registers->l));
     
     case 0x76: //HALT
-        halt();
-        return 1;
-        break;
+        return halt();
     
     case 0x77: //LD (HL), A
-        loadRHl(&(registers->a));
-        return 2;
-        break;      
+        return loadRHl(&(registers->a));
     
     case 0x78: //LD A, B
-        loadRR8(&(registers->a), &(registers->b));
-        return 1;
-        break;      
+        return loadRR8(&(registers->a), &(registers->b));
     
     case 0x79: //LD A, C
-        loadRR8(&(registers->a), &(registers->c));
-        return 1;
-        break;      
+        return loadRR8(&(registers->a), &(registers->c));
     
     case 0x7A: //LD A, D
-        loadRR8(&(registers->a), &(registers->d));
-        return 1;
-        break;      
+        return loadRR8(&(registers->a), &(registers->d));
     
     case 0x7B: //LD A, E
-        loadRR8(&(registers->a), &(registers->e));
-        return 1;
-        break;      
+        return loadRR8(&(registers->a), &(registers->e));
     
     case 0x7C: //LD A, H
-        loadRR8(&(registers->a), &(registers->h));
-        return 1;
-        break;      
+        return loadRR8(&(registers->a), &(registers->h));
     
     case 0x7D: //LD A, L
-        loadRR8(&(registers->a), &(registers->l));
-        return 1;
-        break;      
+        return loadRR8(&(registers->a), &(registers->l));
     
     case 0x7E: //LD A, (HL)
-        loadHlR(&(registers->a));
-        return 2;
-        break;      
+        return loadHlR(&(registers->a));
     
     case 0x7F: //LD A, A
-        loadRR8(&(registers->a), &(registers->a));
-        return 1;
-        break;
+        return loadRR8(&(registers->a), &(registers->a));
 
     case 0x80: //ADD A, B
-        addRA(&(registers->b));
-        return 1;
-        break;
+        return addRA(&(registers->b));
     
     case 0x81: //ADD A, C
-        addRA(&(registers->c));
-        return 1;
-        break;
+        return addRA(&(registers->c));
     
     case 0x82: //ADD A, D
-        addRA(&(registers->d));
-        return 1;
-        break;
+        return addRA(&(registers->d));
     
     case 0x83: //ADD A, E
-        addRA(&(registers->e));
-        return 1;
-        break;
+        return addRA(&(registers->e));
     
     case 0x84: //ADD A, H
-        addRA(&(registers->h));
-        return 1;
-        break;
+        return addRA(&(registers->h));
     
     case 0x85: //ADD A, L
-        addRA(&(registers->l));
-        return 1;
-        break;
+        return addRA(&(registers->l));
     
     case 0x86: //ADD A, (HL)
-        addHlA();
-        return 2;
-        break;
+        return addHlA();
     
     case 0x87: //ADD A, A
-        addRA(&(registers->a));
-        return 1;
-        break;      
+        return addRA(&(registers->a));  
     
     case 0x88: //ADC A, B
-        adcRA(&(registers->b));
-        return 1;
-        break;      
+        return adcRA(&(registers->b));
     
     case 0x89: //ADC A, C
-        adcRA(&(registers->c));
-        return 1;
-        break;      
+        return adcRA(&(registers->c));
     
     case 0x8A: //ADC A, D
-        adcRA(&(registers->d));
-        return 1;
-        break;      
+        return adcRA(&(registers->d));
     
     case 0x8B: //ADC A, E
-        adcRA(&(registers->e));
-        return 1;
-        break;      
+        return adcRA(&(registers->e));
     
     case 0x8C: //ADC A, H
-        adcRA(&(registers->h));
-        return 1;
-        break;      
+        return adcRA(&(registers->h));
     
     case 0x8D: //ADC A, L
-        adcRA(&(registers->l));
-        return 1;
-        break;      
+        return adcRA(&(registers->l));
     
     case 0x8E: //ADC A, (HL)
-        adcHlA();
-        return 2;
-        break;      
+        return adcHlA();
     
     case 0x8F: //ADC A, A
-        adcRA(&(registers->a));
-        return 1;
-        break;
+        return adcRA(&(registers->a));
     
     case 0x90: //SUB A, B
-        subRA(&(registers->b));
-        return 1;
-        break;
+        return subRA(&(registers->b));
     
     case 0x91: //SUB A, C
-        subRA(&(registers->c));
-        return 1;
-        break;
+        return subRA(&(registers->c));
     
     case 0x92: //SUB A, D
-        subRA(&(registers->d));
-        return 1;
-        break;
+        return subRA(&(registers->d));
     
     case 0x93: //SUB A, E
-        subRA(&(registers->e));
-        return 1;
-        break;
+        return subRA(&(registers->e));
     
     case 0x94: //SUB A, H
-        subRA(&(registers->h));
-        return 1;
-        break;
+        return subRA(&(registers->h));
     
     case 0x95: //SUB A, L
-        subRA(&(registers->l));
-        return 1;
-        break;
+        return subRA(&(registers->l));
     
     case 0x96: //SUB A, (HL)
-        subHlA();
-        return 2;
-        break;
+        return subHlA();
     
     case 0x97: //SUB A, A
-        subRA(&(registers->a));
-        return 1;
-        break;      
+        return subRA(&(registers->a));
     
     case 0x98: //SBC A, B
-        sbcRA(&(registers->b));
-        return 1;
-        break;      
+        return sbcRA(&(registers->b));
     
     case 0x99: //SBC A, C
-        sbcRA(&(registers->c));
-        return 1;
-        break;      
+        return sbcRA(&(registers->c));
     
     case 0x9A: //SBC A, D
-        sbcRA(&(registers->d));
-        return 1;
-        break;      
+        return sbcRA(&(registers->d));
     
     case 0x9B: //SBC A, E
-        sbcRA(&(registers->e));
-        return 1;
-        break;
+        return sbcRA(&(registers->e));
     
     case 0x9C: //SBC A, H
-        sbcRA(&(registers->h));
-        return 1;
-        break;      
+        return sbcRA(&(registers->h));
     
     case 0x9D: //SBC A, L
-        sbcRA(&(registers->l));
-        return 1;
-        break;      
+        return sbcRA(&(registers->l));
     
     case 0x9E: //SBC A, (HL)
-        sbcHlA();
-        return 2;
-        break;      
+        return sbcHlA();
     
     case 0x9F: //SBC A, A
-        sbcRA(&(registers->a));
-        return 1;
-        break;
+        return sbcRA(&(registers->a));
 
     case 0xA0: //AND A, B
-        andAR(&(registers->b));
-        return 1;
-        break;
+        return andAR(&(registers->b));
     
     case 0xA1: //AND A, C
-        andAR(&(registers->c));
-        return 1;
-        break;
+        return andAR(&(registers->c));
     
     case 0xA2: //AND A, D
-        andAR(&(registers->d));
-        return 1;
-        break;
+        return andAR(&(registers->d));
     
     case 0xA3: //AND A, E
-        andAR(&(registers->e));
-        return 1;
-        break;
+        return andAR(&(registers->e));
     
     case 0xA4: //AND A, H
-        andAR(&(registers->h));
-        return 1;
-        break;
+        return andAR(&(registers->h));
     
     case 0xA5: //AND A, L
-        andAR(&(registers->l));
-        return 1;
-        break;
+        return andAR(&(registers->l));
     
     case 0xA6: //AND A, (HL)
-        andAHl();
-        return 2;
-        break;
+        return andAHl();
     
     case 0xA7: //AND A, A
-        andAR(&(registers->a));
-        return 1;
-        break;      
+        return andAR(&(registers->a));
     
     case 0xA8: //XOR A, B
-        xorAR(&(registers->b));
-        return 1;
-        break;      
+        return xorAR(&(registers->b));
     
     case 0xA9: //XOR A, C
-        xorAR(&(registers->c));
-        return 1;
-        break;      
+        return xorAR(&(registers->c));
 
     case 0xAA: //XOR A, D
-        xorAR(&(registers->d));
-        return 1;
-        break;      
+        return xorAR(&(registers->d));
     
     case 0xAB: //XOR A, E
-        xorAR(&(registers->e));
-        return 1;
-        break;      
+        return xorAR(&(registers->e));
     
     case 0xAC: //XOR A, H
-        xorAR(&(registers->h));
-        return 1;
-        break;      
+        return xorAR(&(registers->h));
     
     case 0xAD: //XOR A, L
-        xorAR(&(registers->l));
-        return 1;
-        break;      
+        return xorAR(&(registers->l));
     
     case 0xAE: //XOR A, (HL)
-        xorAHl();
-        return 2;
-        break;      
-    
+        return xorAHl();
+              
     case 0xAF: //XOR A, A
-        xorAR(&(registers->a));
-        return 1;
-        break;
+        return xorAR(&(registers->a));
 
     case 0xB0: //OR A, B
-        orAR(&(registers->b));
-        return 1;
-        break;
-    
+        return orAR(&(registers->b));
+        
     case 0xB1: //OR A, C
-        orAR(&(registers->c));
-        return 1;
-        break;
+        return orAR(&(registers->c));
     
     case 0xB2: //OR A, D
-        orAR(&(registers->d));
-        return 1;
-        break;
+        return orAR(&(registers->d));
         
     case 0xB3: //OR A, E
-        orAR(&(registers->e));
-        return 1;
-        break;
+        return orAR(&(registers->e));
         
     case 0xB4: //OR A, H
-        orAR(&(registers->h));
-        return 1;
-        break;
+        return orAR(&(registers->h));
         
     case 0xB5: //OR A, L
-        orAR(&(registers->l));
-        return 1;
-        break;
+        return orAR(&(registers->l));
         
     case 0xB6: //OR A, (HL)
-        orAHl();
-        return 2;
-        break;
+        return orAHl();
         
     case 0xB7: //OR A, A
-        orAR(&(registers->a));
-        return 1;
-        break;      
+        return orAR(&(registers->a));
         
     case 0xB8: //CP A, B
-        cpAR(&(registers->b));
-        return 1;
-        break;      
+        return cpAR(&(registers->b));
         
     case 0xB9: //CP A, C
-        cpAR(&(registers->c));
-        return 1;
-        break;      
+        return cpAR(&(registers->c));
 
     case 0xBA: //CP A, D
-        cpAR(&(registers->d));
-        return 1;
-        break;      
+        return cpAR(&(registers->d));
         
     case 0xBB: //CP A, E
-        cpAR(&(registers->e));
-        return 1;
-        break;      
+        return cpAR(&(registers->e));
         
     case 0xBC: //CP A, H
-        cpAR(&(registers->h));
-        return 1;
-        break;      
+        return cpAR(&(registers->h));
         
    case 0xBD: //CP A, L
-        cpAR(&(registers->l));
-        return 1;
-        break;      
+       return cpAR(&(registers->l));
         
     case 0xBE: //CP A, (HL)
-        cpAHl();
-        return 2;
-        break;      
+        return cpAHl();
         
     case 0xBF: //CP A, A
-        cpAR(&(registers->a));
-        return 1;
-        break;
+        return cpAR(&(registers->a));
 
-    case 0xC0: { //RET NZ
-        bool condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        retC(condition);
-        if(condition){
-            return 5;
-        }
-        return 2;
-        break;
-    }
+    case 0xC0: //RET NZ
+        condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return retC(condition, instructionCycle);
     
     case 0xC1: //POP BC
-        popR(&(registers->bc));
-        return 3;
-        break;
+        return popR(&(registers->bc), instructionCycle);
     
-    case 0xC2: { //JP NZ, nn
-        bool condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        jpCIm(condition);
-        if(condition){
-            return 4;
-        }
-        return 3;
-        break;
-    }
+    case 0xC2: //JP NZ, nn
+        condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return jpCIm(condition, instructionCycle);
 
     case 0xC3: //JP nn
-        jpIm();
-        return 4;
-        break;
+        return jpIm(instructionCycle);
     
-    case 0xC4: { //CALL NZ, nn
-        bool condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        callCIm(condition);
-        if(condition){
-            return 6;
-        }
-        return 3;
-        break;
-    }
+    case 0xC4:  //CALL NZ, nn
+        condition = !registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return callCIm(condition, instructionCycle);
 
     case 0xC5: //PUSH BC
-        pushR(&(registers->bc));
-        return 4;
-        break;
+        return pushR(&(registers->bc), instructionCycle);
     
     case 0xC6: //ADD A, n
-        addImA();
-        return 2;
-        break;
-    
+        return addImA();
+        
     case 0xC7: //RST 00h
-        rst(0x0000);
-        return 4;
-        break;      
+        return rst(0x0000, instructionCycle);
     
-    case 0xC8: { //RET Z
-        bool condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        retC(condition);
-        if(condition){
-            return 5;
-        }
-        return 2;
-        break;  
-    }    
+    case 0xC8: //RET Z
+        condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return retC(condition, instructionCycle);
     
     case 0xC9: //RET
-        ret();
-        return 4;
-        break;      
+        return ret(instructionCycle);
     
-    case 0xCA: { //JP Z, nn
-        bool condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        jpCIm(condition);
-        if(condition){
-            return 4;
-        }
-        return 3;
-        break;  
-    }    
+    case 0xCA: //JP Z, nn
+        condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return jpCIm(condition, instructionCycle);
     
     case 0xCB: { //PREFIX CB 
-        uint8_t nextInstruction = readNext8Bit();
-        switch(nextInstruction) {
+        if (instructionCycle == 1) {
+            cbOpcode = readNext8Bit();
+        }
+        switch(cbOpcode) {
             case 0x00:
-                rlcR(&(registers->b));
-                return 2;
-                break;
+                return rlcR(&(registers->b));
             
             case 0x01:
-                rlcR(&(registers->c));
-                return 2;
-                break;
+                return rlcR(&(registers->c));
             
             case 0x02:
-                rlcR(&(registers->d));
-                return 2;
-                break;
+                return rlcR(&(registers->d));
             
             case 0x03:
-                rlcR(&(registers->e));
-                return 2;
-                break;
+                return rlcR(&(registers->e));
             
             case 0x04:
-                rlcR(&(registers->h));
-                return 2;
-                break;
+                return rlcR(&(registers->h));
             
             case 0x05:
-                rlcR(&(registers->l));
-                return 2;
-                break;
+                return rlcR(&(registers->l));
 
             case 0x06:
-                rlcHl();
-                return 4;
-                break;
+                return rlcHl(instructionCycle);
 
             case 0x07:
-                rlcR(&(registers->a));
-                return 2;
-                break;
+                return rlcR(&(registers->a));
 
             case 0x08:
-                rrcR(&(registers->b));
-                return 2;
-                break;
+                return rrcR(&(registers->b));
 
             case 0x09:
-                rrcR(&(registers->c));
-                return 2;
-                break;
-
+                return rrcR(&(registers->c));
+                
             case 0x0A:
-                rrcR(&(registers->d));
-                return 2;
-                break;
-
+                return rrcR(&(registers->d));
+                
             case 0x0B:
-                rrcR(&(registers->e));
-                return 2;
-                break;
+                return rrcR(&(registers->e));
 
             case 0x0C:
-                rrcR(&(registers->h));
-                return 2;
-                break;
-
+                return rrcR(&(registers->h));
+                
             case 0x0D:
-                rrcR(&(registers->l));
-                return 2;
-                break;
-
+                return rrcR(&(registers->l));
+                
             case 0x0E:
-                rrcHl();
-                return 4;
-                break;
+                return rrcHl(instructionCycle);
 
             case 0x0F:
-                rrcR(&(registers->a));
-                return 2;
-                break;
+                return rrcR(&(registers->a));
 
             case 0x10:
-                rlR(&(registers->b));
-                return 2;
-                break;
-
+                return rlR(&(registers->b));
+                
             case 0x11:
-                rlR(&(registers->c));
-                return 2;
-                break;
+                return rlR(&(registers->c));
 
             case 0x12:
-                rlR(&(registers->d));
-                return 2;
-                break;
+                return rlR(&(registers->d));
 
             case 0x13:
-                rlR(&(registers->e));
-                return 2;
-                break;
+                return rlR(&(registers->e));
 
             case 0x14:
-                rlR(&(registers->h));
-                return 2;
-                break;
+                return rlR(&(registers->h));
 
             case 0x15:
-                rlR(&(registers->l));
-                return 2;
-                break;
+                return rlR(&(registers->l));
 
             case 0x16:
-                rlHl();
-                return 4;
-                break;
+                return rlHl(instructionCycle);
 
             case 0x17:
-                rlR(&(registers->a));
-                return 2;
-                break;
+                return rlR(&(registers->a));
 
             case 0x18:
-                rrR(&(registers->b));
-                return 2;
-                break;
+                return rrR(&(registers->b));
 
             case 0x19:
-                rrR(&(registers->c));
-                return 2;
-                break;
+                return rrR(&(registers->c));
 
             case 0x1A:
-                rrR(&(registers->d));
-                return 2;
-                break;
+                return rrR(&(registers->d));
 
             case 0x1B:
-                rrR(&(registers->e));
-                return 2;
-                break;
+                return rrR(&(registers->e));
 
             case 0x1C:
-                rrR(&(registers->h));
-                return 2;
-                break;
+                return rrR(&(registers->h));
 
             case 0x1D:
-                rrR(&(registers->l));
-                return 2;
-                break;
+                return rrR(&(registers->l));
 
             case 0x1E:
-                rrHl();
-                return 4;
-                break;
+                return rrHl(instructionCycle);
 
             case 0x1F:
-                rrR(&(registers->a));
-                return 2;
-                break;
+                return rrR(&(registers->a));
 
             case 0x20:
-                slaR(&(registers->b));
-                return 2;
-                break;
+                return slaR(&(registers->b));
 
             case 0x21:
-                slaR(&(registers->c));
-                return 2;
-                break;
+                return slaR(&(registers->c));
 
             case 0x22:
-                slaR(&(registers->d));
-                return 2;
-                break;
+                return slaR(&(registers->d));
 
             case 0x23:
-                slaR(&(registers->e));
-                return 2;
-                break;
+                return slaR(&(registers->e));
 
             case 0x24:
-                slaR(&(registers->h));
-                return 2;
-                break;
+                return slaR(&(registers->h));
 
             case 0x25:
-                slaR(&(registers->l));
-                return 2;
-                break;
+                return slaR(&(registers->l));
 
             case 0x26:
-                slaHl();
-                return 4;
-                break;
+                return slaHl(instructionCycle);
 
             case 0x27:
-                slaR(&(registers->a));
-                return 2;
-                break;
+                return slaR(&(registers->a));
 
             case 0x28:
-                sraR(&(registers->b));
-                return 2;
-                break;
+                return sraR(&(registers->b));
 
             case 0x29:
-                sraR(&(registers->c));
-                return 2;
-                break;
-
+                return sraR(&(registers->c));
+                
             case 0x2A:
-                sraR(&(registers->d));
-                return 2;
-                break;
-
+                return sraR(&(registers->d));
+                
             case 0x2B:
-                sraR(&(registers->e));
-                return 2;
-                break;
+                return sraR(&(registers->e));
 
             case 0x2C:
-                sraR(&(registers->h));
-                return 2;
-                break;
-
+                return sraR(&(registers->h));
+                
             case 0x2D:
-                sraR(&(registers->l));
-                return 2;
-                break;
+                return sraR(&(registers->l));
 
             case 0x2E:
-                sraHl();
-                return 4;
-                break;
+                return sraHl(instructionCycle);
 
             case 0x2F:
-                sraR(&(registers->a));
-                return 2;
-                break;
-
+                return sraR(&(registers->a));
+                
             case 0x30:
-                swapR(&(registers->b));
-                return 2;
-                break;
-
+                return swapR(&(registers->b));
+                
             case 0x31:
-                swapR(&(registers->c));
-                return 2;
-                break;
+                return swapR(&(registers->c));
 
             case 0x32:
-                swapR(&(registers->d));
-                return 2;
-                break;
+                return swapR(&(registers->d));
 
             case 0x33:
-                swapR(&(registers->e));
-                return 2;
-                break;
+                return swapR(&(registers->e));
 
             case 0x34:
-                swapR(&(registers->h));
-                return 2;
-                break;
+                return swapR(&(registers->h));
 
             case 0x35:
-                swapR(&(registers->l));
-                return 2;
-                break;
+                return swapR(&(registers->l));
 
             case 0x36:
-                swapHl();
-                return 4;
-                break;
+                return swapHl(instructionCycle);
 
             case 0x37:
-                swapR(&(registers->a));
-                return 2;
-                break;
+                return swapR(&(registers->a));
 
             case 0x38:
-                srlR(&(registers->b));
-                return 2;
-                break;
-
+                return srlR(&(registers->b));
+                
             case 0x39:
-                srlR(&(registers->c));
-                return 2;
-                break;
-
+                return srlR(&(registers->c));
+                
             case 0x3A:
-                srlR(&(registers->d));
-                return 2;
-                break;
+                return srlR(&(registers->d));
 
             case 0x3B:
-                srlR(&(registers->e));
-                return 2;
-                break;
+                return srlR(&(registers->e));
 
             case 0x3C:
-                srlR(&(registers->h));
-                return 2;
-                break;
+                return srlR(&(registers->h));
 
             case 0x3D:
-                srlR(&(registers->l));
-                return 2;
-                break;
+                return srlR(&(registers->l));
 
             case 0x3E:
-                srlHl();
-                return 4;
-                break;
+                return srlHl(instructionCycle);
 
             case 0x3F:
-                srlR(&(registers->a));
-                return 2;
-                break;
+                return srlR(&(registers->a));
 
             case 0x40:
-                bitBR(0, &(registers->b));
-                return 2;
-                break;
+                return bitBR(0, &(registers->b));
             
             case 0x41:
-                bitBR(0, &(registers->c));
-                return 2;
-                break;
+                return bitBR(0, &(registers->c));
             
             case 0x42:
-                bitBR(0, &(registers->d));
-                return 2;
-                break;
+                return bitBR(0, &(registers->d));
             
             case 0x43:
-                bitBR(0, &(registers->e));
-                return 2;
-                break;
+                return bitBR(0, &(registers->e));
             
             case 0x44:
-                bitBR(0, &(registers->h));
-                return 2;
-                break;
+                return bitBR(0, &(registers->h));
             
             case 0x45:
-                bitBR(0, &(registers->l));
-                return 2;
-                break;
+                return bitBR(0, &(registers->l));
 
             case 0x46:
-                bitBHl(0);
-                return 3;
-                break;
+                return bitBHl(0, instructionCycle);
 
             case 0x47:
-                bitBR(0, &(registers->a));
-                return 2;
-                break;
+                return bitBR(0, &(registers->a));
 
             case 0x48:
-                bitBR(1, &(registers->b));
-                return 2;
-                break;
+                return bitBR(1, &(registers->b));
 
             case 0x49:
-                bitBR(1, &(registers->c));
-                return 2;
-                break;
+                return bitBR(1, &(registers->c));
 
             case 0x4A:
-                bitBR(1, &(registers->d));
-                return 2;
-                break;
+                return bitBR(1, &(registers->d));
 
             case 0x4B:
-                bitBR(1, &(registers->e));
-                return 2;
-                break;
+                return bitBR(1, &(registers->e));
 
             case 0x4C:
-                bitBR(1, &(registers->h));
-                return 2;
-                break;
+                return bitBR(1, &(registers->h));
 
             case 0x4D:
-                bitBR(1, &(registers->l));
-                return 2;
-                break;
+                return bitBR(1, &(registers->l));
 
             case 0x4E:
-                bitBHl(1);
-                return 3;
-                break;
+                return bitBHl(1, instructionCycle);
 
             case 0x4F:
-                bitBR(1, &(registers->a));
-                return 2;
-                break;
+                return bitBR(1, &(registers->a));
 
             case 0x50:
-                bitBR(2, &(registers->b));
-                return 2;
-                break;
+                return bitBR(2, &(registers->b));
             
             case 0x51:
-                bitBR(2, &(registers->c));
-                return 2;
-                break;
+                return bitBR(2, &(registers->c));
             
             case 0x52:
-                bitBR(2, &(registers->d));
-                return 2;
-                break;
+                return bitBR(2, &(registers->d));
             
             case 0x53:
-                bitBR(2, &(registers->e));
-                return 2;
-                break;
+                return bitBR(2, &(registers->e));
             
             case 0x54:
-                bitBR(2, &(registers->h));
-                return 2;
-                break;
+                return bitBR(2, &(registers->h));
             
             case 0x55:
-                bitBR(2, &(registers->l));
-                return 2;
-                break;
+                return bitBR(2, &(registers->l));
 
             case 0x56:
-                bitBHl(2);
-                return 3;
-                break;
+                return bitBHl(2, instructionCycle);
 
             case 0x57:
-                bitBR(2, &(registers->a));
-                return 2;
-                break;
+                return bitBR(2, &(registers->a));
 
             case 0x58:
-                bitBR(3, &(registers->b));
-                return 2;
-                break;
+                return bitBR(3, &(registers->b));
 
             case 0x59:
-                bitBR(3, &(registers->c));
-                return 2;
-                break;
+                return bitBR(3, &(registers->c));
 
             case 0x5A:
-                bitBR(3, &(registers->d));
-                return 2;
-                break;
+                return bitBR(3, &(registers->d));
 
             case 0x5B:
-                bitBR(3, &(registers->e));
-                return 2;
-                break;
+                return bitBR(3, &(registers->e));
 
             case 0x5C:
-                bitBR(3, &(registers->h));
-                return 2;
-                break;
+                return bitBR(3, &(registers->h));
 
             case 0x5D:
-                bitBR(3, &(registers->l));
-                return 2;
-                break;
+                return bitBR(3, &(registers->l));
 
             case 0x5E:
-                bitBHl(3);
-                return 3;
-                break;
+                return bitBHl(3, instructionCycle);
 
             case 0x5F:
-                bitBR(3, &(registers->a));
-                return 2;
-                break;
+                return bitBR(3, &(registers->a));
 
             case 0x60:
-                bitBR(4, &(registers->b));
-                return 2;
-                break;
+                return bitBR(4, &(registers->b));
 
             case 0x61:
-                bitBR(4, &(registers->c));
-                return 2;
-                break;
+                return bitBR(4, &(registers->c));
 
             case 0x62:
-                bitBR(4, &(registers->d));
-                return 2;
-                break;
+                return bitBR(4, &(registers->d));
 
             case 0x63:
-                bitBR(4, &(registers->e));
-                return 2;
-                break;
+                return bitBR(4, &(registers->e));
 
             case 0x64:
-                bitBR(4, &(registers->h));
-                return 2;
-                break;
+                return bitBR(4, &(registers->h));
 
             case 0x65:
-                bitBR(4, &(registers->l));
-                return 2;
-                break;
+                return bitBR(4, &(registers->l));
 
             case 0x66:
-                bitBHl(4);
-                return 3;
-                break;
+                return bitBHl(4, instructionCycle);
 
             case 0x67:
-                bitBR(4, &(registers->a));
-                return 2;
-                break;
+                return bitBR(4, &(registers->a));
 
             case 0x68:
-                bitBR(5, &(registers->b));
-                return 2;
-                break;
+                return bitBR(5, &(registers->b));
 
             case 0x69:
-                bitBR(5, &(registers->c));
-                return 2;
-                break;
+                return bitBR(5, &(registers->c));
 
             case 0x6A:
-                bitBR(5, &(registers->d));
-                return 2;
-                break;
+                return bitBR(5, &(registers->d));
 
             case 0x6B:
-                bitBR(5, &(registers->e));
-                return 2;
-                break;
+                return bitBR(5, &(registers->e));
 
             case 0x6C:
-                bitBR(5, &(registers->h));
-                return 2;
-                break;
+                return bitBR(5, &(registers->h));
 
             case 0x6D:
-                bitBR(5, &(registers->l));
-                return 2;
-                break;
+                return bitBR(5, &(registers->l));
 
             case 0x6E:
-                bitBHl(5);
-                return 3;
-                break;
+                return bitBHl(5, instructionCycle);
 
             case 0x6F:
-                bitBR(5, &(registers->a));
-                return 2;
-                break;
+                return bitBR(5, &(registers->a));
 
             case 0x70:
-                bitBR(6, &(registers->b));
-                return 2;
-                break;
+                return bitBR(6, &(registers->b));
 
             case 0x71:
-                bitBR(6, &(registers->c));
-                return 2;
-                break;
+                return bitBR(6, &(registers->c));
 
             case 0x72:
-                bitBR(6, &(registers->d));
-                return 2;
-                break;
+                return bitBR(6, &(registers->d));
 
             case 0x73:
-                bitBR(6, &(registers->e));
-                return 2;
-                break;
+                return bitBR(6, &(registers->e));
 
             case 0x74:
-                bitBR(6, &(registers->h));
-                return 2;
-                break;
+                return bitBR(6, &(registers->h));
 
             case 0x75:
-                bitBR(6, &(registers->l));
-                return 2;
-                break;
+                return bitBR(6, &(registers->l));
 
             case 0x76:
-                bitBHl(6);
-                return 3;
-                break;
+                return bitBHl(6, instructionCycle);
 
             case 0x77:
-                bitBR(6, &(registers->a));
-                return 2;
-                break;
+                return bitBR(6, &(registers->a));
 
             case 0x78:
-                bitBR(7, &(registers->b));
-                return 2;
-                break;
+                return bitBR(7, &(registers->b));
 
             case 0x79:
-                bitBR(7, &(registers->c));
-                return 2;
-                break;
+                return bitBR(7, &(registers->c));
 
             case 0x7A:
-                bitBR(7, &(registers->d));
-                return 2;
-                break;
+                return bitBR(7, &(registers->d));
 
             case 0x7B:
-                bitBR(7, &(registers->e));
-                return 2;
-                break;
+                return bitBR(7, &(registers->e));
 
             case 0x7C:
-                bitBR(7, &(registers->h));
-                return 2;
-                break;
+                return bitBR(7, &(registers->h));
 
             case 0x7D:
-                bitBR(7, &(registers->l));
-                return 2;
-                break;
+                return bitBR(7, &(registers->l));
 
             case 0x7E:
-                bitBHl(7);
-                return 3;
-                break;
+                return bitBHl(7, instructionCycle);
 
             case 0x7F:
-                bitBR(7, &(registers->a));
-                return 2;
-                break;
+                return bitBR(7, &(registers->a));
 
             case 0x80:
-                resBR(0, &(registers->b));
-                return 2;
-                break;
+                return resBR(0, &(registers->b));
             
             case 0x81:
-                resBR(0, &(registers->c));
-                return 2;
-                break;
+                return resBR(0, &(registers->c));
             
             case 0x82:
-                resBR(0, &(registers->d));
-                return 2;
-                break;
+                return resBR(0, &(registers->d));
             
             case 0x83:
-                resBR(0, &(registers->e));
-                return 2;
-                break;
-            
+                return resBR(0, &(registers->e));
+                
             case 0x84:
-                resBR(0, &(registers->h));
-                return 2;
-                break;
-            
+                return resBR(0, &(registers->h));
+                
             case 0x85:
-                resBR(0, &(registers->l));
-                return 2;
-                break;
+                return resBR(0, &(registers->l));
 
             case 0x86:
-                resBHl(0);
-                return 4;
-                break;
-
+                return resBHl(0, instructionCycle);
+                
             case 0x87:
-                resBR(0, &(registers->a));
-                return 2;
-                break;
-
+                return resBR(0, &(registers->a));
+                
             case 0x88:
-                resBR(1, &(registers->b));
-                return 2;
-                break;
+                return resBR(1, &(registers->b));
 
             case 0x89:
-                resBR(1, &(registers->c));
-                return 2;
-                break;
+                return resBR(1, &(registers->c));
 
             case 0x8A:
-                resBR(1, &(registers->d));
-                return 2;
-                break;
+                return resBR(1, &(registers->d));
 
             case 0x8B:
-                resBR(1, &(registers->e));
-                return 2;
-                break;
+                return resBR(1, &(registers->e));
 
             case 0x8C:
-                resBR(1, &(registers->h));
-                return 2;
-                break;
+                return resBR(1, &(registers->h));
 
             case 0x8D:
-                resBR(1, &(registers->l));
-                return 2;
-                break;
-
+                return resBR(1, &(registers->l));
+                
             case 0x8E:
-                resBHl(1);
-                return 4;
-                break;
+                return resBHl(1, instructionCycle);
 
             case 0x8F:
-                resBR(1, &(registers->a));
-                return 2;
-                break;
+                return resBR(1, &(registers->a));
 
             case 0x90:
-                resBR(2, &(registers->b));
-                return 2;
-                break;
+                return resBR(2, &(registers->b));
 
             case 0x91:
-                resBR(2, &(registers->c));
-                return 2;
-                break;
+                return resBR(2, &(registers->c));
 
             case 0x92:
-                resBR(2, &(registers->d));
-                return 2;
-                break;
-
+                return resBR(2, &(registers->d));
+                
             case 0x93:
-                resBR(2, &(registers->e));
-                return 2;
-                break;
+                return resBR(2, &(registers->e));
 
             case 0x94:
-                resBR(2, &(registers->h));
-                return 2;
-                break;
+                return resBR(2, &(registers->h));
 
             case 0x95:
-                resBR(2, &(registers->l));
-                return 2;
-                break;
-
+                return resBR(2, &(registers->l));
+                
             case 0x96:
-                resBHl(2);
-                return 4;
-                break;
+                return resBHl(2, instructionCycle);
 
             case 0x97:
-                resBR(2, &(registers->a));
-                return 2;
-                break;
-
+                return resBR(2, &(registers->a));
+                
             case 0x98:
-                resBR(3, &(registers->b));
-                return 2;
-                break;
-
+                return resBR(3, &(registers->b));
+                
             case 0x99:
-                resBR(3, &(registers->c));
-                return 2;
-                break;
-
+                return resBR(3, &(registers->c));
+                
             case 0x9A:
-                resBR(3, &(registers->d));
-                return 2;
-                break;
-
+                return resBR(3, &(registers->d));
+                
             case 0x9B:
-                resBR(3, &(registers->e));
-                return 2;
-                break;
-
+                return resBR(3, &(registers->e));
+                
             case 0x9C:
-                resBR(3, &(registers->h));
-                return 2;
-                break;
+                return resBR(3, &(registers->h));
 
             case 0x9D:
-                resBR(3, &(registers->l));
-                return 2;
-                break;
+                return resBR(3, &(registers->l));
 
             case 0x9E:
-                resBHl(3);
-                return 4;
-                break;
+                return resBHl(3, instructionCycle);
 
             case 0x9F:
-                resBR(3, &(registers->a));
-                return 2;
-                break;
-
+                return resBR(3, &(registers->a));
+                
             case 0xA0:
-                resBR(4, &(registers->b));
-                return 2;
-                break;
-
+                return resBR(4, &(registers->b));
+                
             case 0xA1:
-                resBR(4, &(registers->c));
-                return 2;
-                break;
-
+                return resBR(4, &(registers->c));
+                
             case 0xA2:
-                resBR(4, &(registers->d));
-                return 2;
-                break;
-
+                return resBR(4, &(registers->d));
+                
             case 0xA3:
-                resBR(4, &(registers->e));
-                return 2;
-                break;
-
+                return resBR(4, &(registers->e));
+                
             case 0xA4:
-                resBR(4, &(registers->h));
-                return 2;
-                break;
-
+                return resBR(4, &(registers->h));
+                
             case 0xA5:
-                resBR(4, &(registers->l));
-                return 2;
-                break;
+                return resBR(4, &(registers->l));
 
             case 0xA6:
-                resBHl(4);
-                return 4;
-                break;
+                return resBHl(4, instructionCycle);
 
             case 0xA7:
-                resBR(4, &(registers->a));
-                return 2;
-                break;
+                return resBR(4, &(registers->a));
 
             case 0xA8:
-                resBR(5, &(registers->b));
-                return 2;
-                break;
-
+                return resBR(5, &(registers->b));
+                
             case 0xA9:
-                resBR(5, &(registers->c));
-                return 2;
-                break;
-
+                return resBR(5, &(registers->c));
+                
             case 0xAA:
-                resBR(5, &(registers->d));
-                return 2;
-                break;
+                return resBR(5, &(registers->d));
 
             case 0xAB:
-                resBR(5, &(registers->e));
-                return 2;
-                break;
+                return resBR(5, &(registers->e));
 
             case 0xAC:
-                resBR(5, &(registers->h));
-                return 2;
-                break;
+                return resBR(5, &(registers->h));
 
             case 0xAD:
-                resBR(5, &(registers->l));
-                return 2;
-                break;
-
+                return resBR(5, &(registers->l));
+                
             case 0xAE:
-                resBHl(5);
-                return 4;
-                break;
-
+                return resBHl(5, instructionCycle);
+                
             case 0xAF:
-                resBR(5, &(registers->a));
-                return 2;
-                break;
+                return resBR(5, &(registers->a));
 
             case 0xB0:
-                resBR(6, &(registers->b));
-                return 2;
-                break;
+                return resBR(6, &(registers->b));
 
             case 0xB1:
-                resBR(6, &(registers->c));
-                return 2;
-                break;
+                return resBR(6, &(registers->c));
 
             case 0xB2:
-                resBR(6, &(registers->d));
-                return 2;
-                break;
+                return resBR(6, &(registers->d));
 
             case 0xB3:
-                resBR(6, &(registers->e));
-                return 2;
-                break;
+                return resBR(6, &(registers->e));
 
             case 0xB4:
-                resBR(6, &(registers->h));
-                return 2;
-                break;
+                return resBR(6, &(registers->h));
 
             case 0xB5:
-                resBR(6, &(registers->l));
-                return 2;
-                break;
+                return resBR(6, &(registers->l));
 
             case 0xB6:
-                resBHl(6);
-                return 4;
-                break;
+                return resBHl(6, instructionCycle);
 
             case 0xB7:
-                resBR(6, &(registers->a));
-                return 2;
-                break;
+                return resBR(6, &(registers->a));
 
             case 0xB8:
-                resBR(7, &(registers->b));
-                return 2;
-                break;
+                return resBR(7, &(registers->b));
 
             case 0xB9:
-                resBR(7, &(registers->c));
-                return 2;
-                break;
-
+                return resBR(7, &(registers->c));
+                
             case 0xBA:
-                resBR(7, &(registers->d));
-                return 2;
-                break;
+                return resBR(7, &(registers->d));
 
             case 0xBB:
-                resBR(7, &(registers->e));
-                return 2;
-                break;
+                return resBR(7, &(registers->e));
 
             case 0xBC:
-                resBR(7, &(registers->h));
-                return 2;
-                break;
+                return resBR(7, &(registers->h));
 
             case 0xBD:
-                resBR(7, &(registers->l));
-                return 2;
-                break;
-
+                return resBR(7, &(registers->l));
+                
             case 0xBE:
-                resBHl(7);
-                return 4;
-                break;
-
+                return resBHl(7, instructionCycle);
+                
             case 0xBF:
-                resBR(7, &(registers->a));
-                return 2;
-                break;
-
+                return resBR(7, &(registers->a));
+                
             case 0xC0:
-                setBR(0, &(registers->b));
-                return 2;
-                break;
+                return setBR(0, &(registers->b));
 
             case 0xC1:
-                setBR(0, &(registers->c));
-                return 2;
-                break;
-
+                return setBR(0, &(registers->c));
+                
             case 0xC2:
-                setBR(0, &(registers->d));
-                return 2;
-                break;
+                return setBR(0, &(registers->d));
 
             case 0xC3:
-                setBR(0, &(registers->e));
-                return 2;
-                break;
-
+                return setBR(0, &(registers->e));
+                
             case 0xC4:
-                setBR(0, &(registers->h));
-                return 2;
-                break;
-
+                return setBR(0, &(registers->h));
+                
             case 0xC5:
-                setBR(0, &(registers->l));
-                return 2;
-                break;
-
+                return setBR(0, &(registers->l));
+                
             case 0xC6:
-                setBHl(0);
-                return 4;
-                break;
+                return setBHl(0, instructionCycle);
 
             case 0xC7:
-                setBR(0, &(registers->a));
-                return 2;
-                break;
+                return setBR(0, &(registers->a));
 
             case 0xC8:
-                setBR(1, &(registers->b));
-                return 2;
-                break;
+                return setBR(1, &(registers->b));
 
             case 0xC9:
-                setBR(1, &(registers->c));
-                return 2;
-                break;
+                return setBR(1, &(registers->c));
 
             case 0xCA:
-                setBR(1, &(registers->d));
-                return 2;
-                break;
-
+                return setBR(1, &(registers->d));
+                
             case 0xCB:
-                setBR(1, &(registers->e));
-                return 2;
-                break;
-
+                return setBR(1, &(registers->e));
+                
             case 0xCC:
-                setBR(1, &(registers->h));
-                return 2;
-                break;
-
+                return setBR(1, &(registers->h));
+                
             case 0xCD:
-                setBR(1, &(registers->l));
-                return 2;
-                break;
-
+                return setBR(1, &(registers->l));
+                
             case 0xCE:
-                setBHl(1);
-                return 4;
-                break;
-
+                return setBHl(1, instructionCycle);
+                
             case 0xCF:
-                setBR(1, &(registers->a));
-                return 2;
-                break;
+                return setBR(1, &(registers->a));
 
             case 0xD0:
-                setBR(2, &(registers->b));
-                return 2;
-                break;
+                return setBR(2, &(registers->b));
 
             case 0xD1:
-                setBR(2, &(registers->c));
-                return 2;
-                break;
+                return setBR(2, &(registers->c));
 
             case 0xD2:
-                setBR(2, &(registers->d));
-                return 2;
-                break;
-
+                return setBR(2, &(registers->d));
+                
             case 0xD3:
-                setBR(2, &(registers->e));
-                return 2;
-                break;
+                return setBR(2, &(registers->e));
 
             case 0xD4:
-                setBR(2, &(registers->h));
-                return 2;
-                break;
+                return setBR(2, &(registers->h));
 
             case 0xD5:
-                setBR(2, &(registers->l));
-                return 2;
-                break;
+                return setBR(2, &(registers->l));
 
             case 0xD6:
-                setBHl(2);
-                return 4;
-                break;
-
+                return setBHl(2, instructionCycle);
+                
             case 0xD7:
-                setBR(2, &(registers->a));
-                return 2;
-                break;
-
+                return setBR(2, &(registers->a));
+                
             case 0xD8:
-                setBR(3, &(registers->b));
-                return 2;
-                break;
-
+                return setBR(3, &(registers->b));
+                
             case 0xD9:
-                setBR(3, &(registers->c));
-                return 2;
-                break;
+                return setBR(3, &(registers->c));
 
             case 0xDA:
-                setBR(3, &(registers->d));
-                return 2;
-                break;
+                return setBR(3, &(registers->d));
 
             case 0xDB:
-                setBR(3, &(registers->e));
-                return 2;
-                break;
-
+                return setBR(3, &(registers->e));
+                
             case 0xDC:
-                setBR(3, &(registers->h));
-                return 2;
-                break;
+                return setBR(3, &(registers->h));
 
             case 0xDD:
-                setBR(3, &(registers->l));
-                return 2;
-                break;
+                return setBR(3, &(registers->l));
 
             case 0xDE:
-                setBHl(3);
-                return 4;
-                break;
+                return setBHl(3, instructionCycle);
 
             case 0xDF:
-                setBR(3, &(registers->a));
-                return 2;
-                break;
-
+                return setBR(3, &(registers->a));
+                
             case 0xE0:
-                setBR(4, &(registers->b));
-                return 2;
-                break;
-
+                return setBR(4, &(registers->b));
+                
             case 0xE1:
-                setBR(4, &(registers->c));
-                return 2;
-                break;
-
+                return setBR(4, &(registers->c));
+                
             case 0xE2:
-                setBR(4, &(registers->d));
-                return 2;
-                break;
+                return setBR(4, &(registers->d));
 
             case 0xE3:
-                setBR(4, &(registers->e));
-                return 2;
-                break;
+                return setBR(4, &(registers->e));
 
             case 0xE4:
-                setBR(4, &(registers->h));
-                return 2;
-                break;
+                return setBR(4, &(registers->h));
 
             case 0xE5:
-                setBR(4, &(registers->l));
-                return 2;
-                break;
+                return setBR(4, &(registers->l));
 
             case 0xE6:
-                setBHl(4);
-                return 4;
-                break;
-
+                return setBHl(4, instructionCycle);
+                
             case 0xE7:
-                setBR(4, &(registers->a));
-                return 2;
-                break;
-
+                return setBR(4, &(registers->a));
+                
             case 0xE8:
-                setBR(5, &(registers->b));
-                return 2;
-                break;
-
+                return setBR(5, &(registers->b));
+                
             case 0xE9:
-                setBR(5, &(registers->c));
-                return 2;
-                break;
-
+                return setBR(5, &(registers->c));
+                
             case 0xEA:
-                setBR(5, &(registers->d));
-                return 2;
-                break;
+                return setBR(5, &(registers->d));
 
             case 0xEB:
-                setBR(5, &(registers->e));
-                return 2;
-                break;
-
+                return setBR(5, &(registers->e));
+                
             case 0xEC:
-                setBR(5, &(registers->h));
-                return 2;
-                break;
-
+                return setBR(5, &(registers->h));
+                
             case 0xED:
-                setBR(5, &(registers->l));
-                return 2;
-                break;
-
+                return setBR(5, &(registers->l));
+                
             case 0xEE:
-                setBHl(5);
-                return 4;
-                break;
-
+                return setBHl(5, instructionCycle);
+                
             case 0xEF:
-                setBR(5, &(registers->a));
-                return 2;
-                break;
+                return setBR(5, &(registers->a));
 
             case 0xF0:
-                setBR(6, &(registers->b));
-                return 2;
-                break;
+                return setBR(6, &(registers->b));
 
             case 0xF1:
-                setBR(6, &(registers->c));
-                return 2;
-                break;
+                return setBR(6, &(registers->c));
 
             case 0xF2:
-                setBR(6, &(registers->d));
-                return 2;
-                break;
+                return setBR(6, &(registers->d));
 
             case 0xF3:
-                setBR(6, &(registers->e));
-                return 2;
-                break;
+                return setBR(6, &(registers->e));
 
             case 0xF4:
-                setBR(6, &(registers->h));
-                return 2;
-                break;
-
+                return setBR(6, &(registers->h));
+                
             case 0xF5:
-                setBR(6, &(registers->l));
-                return 2;
-                break;
+                return setBR(6, &(registers->l));
 
             case 0xF6:
-                setBHl(6);
-                return 4;
-                break;
+                return setBHl(6, instructionCycle);
 
             case 0xF7:
-                setBR(6, &(registers->a));
-                return 2;
-                break;
+                return setBR(6, &(registers->a));
 
             case 0xF8:
-                setBR(7, &(registers->b));
-                return 2;
-                break;
+                return setBR(7, &(registers->b));
 
             case 0xF9:
-                setBR(7, &(registers->c));
-                return 2;
-                break;
+                return setBR(7, &(registers->c));
 
             case 0xFA:
-                setBR(7, &(registers->d));
-                return 2;
-                break;
-
+                return setBR(7, &(registers->d));
+                
             case 0xFB:
-                setBR(7, &(registers->e));
-                return 2;
-                break;
+                return setBR(7, &(registers->e));
 
             case 0xFC:
-                setBR(7, &(registers->h));
-                return 2;
-                break;
+                return setBR(7, &(registers->h));
 
             case 0xFD:
-                setBR(7, &(registers->l));
-                return 2;
-                break;
-
+                return setBR(7, &(registers->l));
+                
             case 0xFE:
-                setBHl(7);
-                return 4;
-                break;
+                return setBHl(7, instructionCycle);
 
             case 0xFF:
-                setBR(7, &(registers->a));
-                return 2;
-                break;
+                return setBR(7, &(registers->a));
         }
-        break;
     } 
         
-    case 0xCC: { //CALL Z, nn
-        bool condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
-        callCIm(condition);
-        if(condition){
-            return 6;
-        }
-        return 3;
-        break;      
-    }
+    case 0xCC: //CALL Z, nn
+        condition = registers->isFlagSet(RegistersFlags::ZERO_FLAG);
+        return callCIm(condition, instructionCycle);
 
     case 0xCD: //CALL nn
-        callIm();
-        return 6;
-        break;      
+        return callIm(instructionCycle);
     
     case 0xCE: //ADC A, n
-        adcImA();
-        return 2;
-        break;      
+        return adcImA();
+              
     
     case 0xCF: //RST 08h
-        rst(0x0008);
-        return 4;
-        break;
+        return rst(0x0008, instructionCycle);
+        
 
-    case 0xD0: { //RET NC
-        bool condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        retC(condition);
-        if(condition){
-            return 5;
-        }
-        return 2;
-        break;  
-    }    
+    case 0xD0: //RET NC
+        condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return retC(condition, instructionCycle);
     
     case 0xD1: //POP DE
-        popR(&(registers->de));
-        return 3;
-        break;
+        return popR(&(registers->de), instructionCycle);
+        
     
-    case 0xD2: { //JP NC, nn
-        bool condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        jpCIm(condition);
-        if(condition){
-            return 4;
-        }
-        return 3;
-        break;
-    }
+    case 0xD2: //JP NC, nn
+        condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return jpCIm(condition, instructionCycle);
     
-    //0xD3 is empty
+    //case 0xD3:
+        //empty!
     
-    case 0xD4: { //CALL NC, nn
-        bool condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        callCIm(condition);
-        if(condition){
-            return 6;
-        }
-        return 3;
-        break;
-    }
+    case 0xD4: //CALL NC, nn
+        condition = !registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return callCIm(condition, instructionCycle);
     
     case 0xD5: //PUSH DE
-        pushR(&(registers->de));
-        return 4;
-        break;
+        return pushR(&(registers->de), instructionCycle);
+        
     
     case 0xD6: //SUB A, n
-        subImA();
-        return 2;
-        break;
+        return subImA();
     
     case 0xD7: //RST 10h
-        rst(0x0010);
-        return 4;
-        break;      
+        return rst(0x0010, instructionCycle);
     
-    case 0xD8:  { //RET C
-        bool condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        retC(condition);
-        if(condition){
-            return 5;
-        }
-        return 2;
-        break;  
-    }    
+    case 0xD8: //RET C
+        condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return retC(condition, instructionCycle);
 
     case 0xD9: //RETI
-        retI();
-        return 4;
-        break;      
+        return retI(instructionCycle);
     
-    case 0xDA: { //JP C, nn
-        bool condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        jpCIm(condition);
-        if(condition){
-            return 4;
-        }
-        return 3;
-        break;   
-    }   
+    case 0xDA: //JP C, nn
+        condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return jpCIm(condition, instructionCycle);
     
-    //0xDB is empty     
+    //case 0xDB:
+        //empty     
     
-    case 0xDC: { //CALL C, nn
-        bool condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
-        callCIm(condition);
-        if(condition){
-            return 6;
-        }
-        return 3;
-        break;    
-    }  
+    case 0xDC: //CALL C, nn
+        condition = registers->isFlagSet(RegistersFlags::CARRY_FLAG);
+        return callCIm(condition, instructionCycle);
     
-    //0xDD is empty
+    //case 0x0xDD:
+        //empty
     
     case 0xDE: //SBC A, n
-        sbcImA();
-        return 2;
-        break;      
+        return sbcImA();
     
     case 0xDF: //RST 18h
-        rst(0x0018);
-        return 4;
-        break;
+        return rst(0x0018, instructionCycle);
 
     case 0xE0: //LD (FF00+n), A
-        loadAHIm();
-        return 3;
-        break;
+        return loadAHIm(instructionCycle);
     
     case 0xE1: //POP HL
-        popR(&(registers->hl));
-        return 3;
-        break;
+        return popR(&(registers->hl), instructionCycle);
     
     case 0xE2: //LD (FF00+C), A
-        loadAHC();
-        return 2;
-        break;
+        return loadAHC();
     
     //0xE3 and 0xE4 are empty
     
     case 0xE5: //PUSH HL
-        pushR(&(registers->hl));
-        return 4;
-        break;
+        return pushR(&(registers->hl), instructionCycle);
     
     case 0xE6: //AND A, n
-        andAIm();
-        return 2;
-        break;
+        return andAIm();
+        
     
     case 0xE7: //RST 20h
-        rst(0x0020);
-        return 4;
-        break;      
+        return rst(0x0020, instructionCycle);
     
     case 0xE8: //ADD SP, n
-        addSpE();
-        return 4;
-        break;      
+        return addSpE(instructionCycle);
     
     case 0xE9: //JP HL
-        jpHl();
-        return 1;
-        break;      
+        return jpHl();
     
     case 0xEA: //LD (nn), A
-        loadAIm();
-        return 4;
-        break;      
+        return loadAIm(instructionCycle);
     
     //0xEB, 0xEC and 0xED are empty         
     
     case 0xEE: //XOR A, n
-        xorAIm();
-        return 2;
-        break;      
+        return xorAIm();
     
     case 0xEF: //RST 28h
-        rst(0x0028);
-        return 4;
-        break;
+        return rst(0x0028, instructionCycle);
     
     case 0xF0: //LD A, (FF00+n)
-        loadHImA();
-        return 3;
-        break;
-    
-    case 0xF1: //POP AF
-        popR(&(registers->af));
-        registers->f &= 0xF0;
-        return 3;
-        break;
+        return loadHImA(instructionCycle);
+        
+    case 0xF1: { //POP AF
+        bool finished = popR(&(registers->af), instructionCycle);
+        if(finished)
+            registers->f &= 0xF0;
+        return finished;
+    }
     
     case 0xF2: //LD A, (FF00+C)
-        loadHCA();
-        return 2;
-        break;
+        return loadHCA();
     
     case 0xF3: //DI
-        di();
-        return 1;
-        break;
+        return di();
     
     //0xF4 is empty
     
     case 0xF5: //PUSH AF
-        pushR(&(registers->af));
-        return 4;
-        break;
+        return pushR(&(registers->af), instructionCycle);
     
     case 0xF6: //OR A, n
-        orAIm();
-        return 2;
-        break;
+        return orAIm();
     
     case 0xF7: //RST 30h
-        rst(0x0030);
-        return 4;
-        break;      
+        return rst(0x0030, instructionCycle);
     
     case 0xF8: //LD HL, SP+e
-        loadSpEHl();
-        return 3;
-        break;      
+        return loadSpEHl(instructionCycle);
+              
     
     case 0xF9: //LD SP, HL
-        loadHlSp();
-        return 2;
-        break;      
+        return loadHlSp();
+              
     
     case 0xFA: //LD A, nn
-        loadImA();
-        return 4;
-        break;  
+        return loadImA(instructionCycle);
     
     case 0xFB: //EI
-        ei();
-        return 1;
-        break;      
+        return ei();
     
     //0xFC and 0xFD are empty   
     
     case 0xFE: //CP A, n
-        cpAIm();
-        return 2;
-        break;      
+        return cpAIm();
     
     case 0xFF: //RST 38h
-        rst(0x0038);
-        return 4;
-        break;
+        return rst(0x0038, instructionCycle);
     }
     
-    std::cout << "ERRORE: opcode non esistente ?" << '\n';
-    return 0;
+    return false;
 }
 
 // Basic Instructions
-void Instructions::halt() { 
-    if(interrupt->isIMEset()){
+bool Instructions::halt()
+{ 
+    if(interrupt->isIMEset())
+    {
         interrupt->setHalted(true);
-    }else if((memory->read(0xFF0F) & memory->read(0xFFFF)) == 0){
+    }
+    else if((memory->read(0xFF0F) & memory->read(0xFFFF)) == 0)
+    {
         interrupt->setHalted(true);
-    }else if((memory->read(0xFF0F) & memory->read(0xFFFF)) != 0){
+    }
+    else if((memory->read(0xFF0F) & memory->read(0xFFFF)) != 0)
+    {
         registers->pc--;
     }
+
+    return true;
 }
 
-void Instructions::stop() {
-    uint8_t param = readNext8Bit();
-
+bool Instructions::stop() {
+    //TODO
+    return true;
 }
 
-void Instructions::di() {
+bool Instructions::di() {
     interrupt->disableIME();
+    return true;
 }
 
-void Instructions::ei() {
+bool Instructions::ei() {
     interrupt->scheduleEnableIME();
+    return true;
 }
 
 // Control flow
 
-void Instructions::jpIm() {
-    uint16_t address = readNext16Bit(); 
+bool Instructions::jpIm(int cycle) {
+
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryW = readNext8Bit();
+        return false;
+    }
+
+    uint16_t address = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
     registers->pc = address;
+
+    readMemoryW = 0;
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::jpHl() {
+bool Instructions::jpHl() {
     registers->pc = registers->hl;
+    return true;
 }
 
-void Instructions::jrCIm(bool condition) {
-    int8_t address = (int8_t)readNext8Bit(); 
-    if(condition){
-        registers->pc += address;
+bool Instructions::jrCIm(bool condition, int cycle) {
+
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit(); 
+        if(!condition)
+            return true;
+        else
+            return false;
     }
+
+    registers->pc += (int8_t)readMemoryZ;
+
+    readMemoryZ = 0;
+    return true;
+
 }
 
-void Instructions::jrIm() {
-    int8_t address = (int8_t)readNext8Bit(); 
-    registers->pc += address;
-}
-
-void Instructions::jpCIm(bool condition) {
-    uint16_t address = readNext16Bit();
-    if (condition){
-        registers->pc = address;
+bool Instructions::jrIm(int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
     }
+
+    registers->pc += (int8_t)readMemoryZ;
+    return true;
 }
 
-void Instructions::callIm() {
-    uint16_t jumpAddress = readNext16Bit();
-    registers->sp--;
-    memory->write(registers->sp, (registers->pc>>8) & 0xFF);  
-    registers->sp--;
-    memory->write(registers->sp, registers->pc & 0xFF);  
+bool Instructions::jpCIm(bool condition, int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit(); 
+        return false;
+    }    
+    else if(cycle == 2)
+    {
+        readMemoryW = readNext8Bit(); 
+        if(!condition)
+            return true;
+        else
+            return false;
+    }
 
-    registers->pc = jumpAddress;  
+    uint16_t address = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+    registers->pc = address;
+
+    readMemoryW = 0;
+    readMemoryZ = 0;
+    return true;
 }
 
+bool Instructions::callIm(int cycle) {
 
-void Instructions::callCIm(bool condition) {
-    uint16_t jumpAddress = readNext16Bit();
-    if(condition){
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }    
+    else if(cycle == 2)
+    {
+        readMemoryW = readNext8Bit();
+        return false;
+    }
+    else if(cycle == 3)
+    {
         registers->sp--;
+        return false;
+    }
+    else if(cycle == 4)
+    {
         memory->write(registers->sp, (registers->pc>>8) & 0xFF);  
         registers->sp--;
-        memory->write(registers->sp, registers->pc & 0xFF);
-        registers->pc = jumpAddress; 
+        return false;
     }
+    
+    memory->write(registers->sp, registers->pc & 0xFF);  
+
+    uint16_t jumpAddress = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+    registers->pc = jumpAddress;  
+    
+    readMemoryW = 0;
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::ret() {
-    uint8_t lsb = memory->read(registers->sp);
-    registers->sp++;
-    uint8_t msb = memory->read(registers->sp);
-    registers->sp++;
-    registers->pc = (static_cast<uint16_t>(msb) << 8) | lsb;
-}
 
-void Instructions::retC(bool condition) {
-    if(condition){
-        uint8_t lsb = memory->read(registers->sp);
-        registers->sp++;
-        uint8_t msb = memory->read(registers->sp);
-        registers->sp++;
-        registers->pc = (static_cast<uint16_t>(msb) << 8) | lsb;
+bool Instructions::callCIm(bool condition, int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }    
+    else if(cycle == 2)
+    {
+        readMemoryW = readNext8Bit();
+        if(!condition)
+            return true;
+        else
+            return false;
     }
+    else if(cycle == 3)
+    {
+        registers->sp--;
+        return false;
+    }
+    else if(cycle == 4)
+    {
+        memory->write(registers->sp, (registers->pc>>8) & 0xFF);  
+        registers->sp--;
+        return false;
+    }
+
+    memory->write(registers->sp, registers->pc & 0xFF);  
+
+    uint16_t jumpAddress = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+    registers->pc = jumpAddress;  
+    
+    readMemoryW = 0; 
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::retI() {
+bool Instructions::ret(int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = memory->read(registers->sp);
+        registers->sp++;
+        return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryW = memory->read(registers->sp);
+        registers->sp++;
+        return false;
+    }
+
+    registers->pc = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+
+    readMemoryZ = 0;
+    readMemoryW = 0;
+    return true;
+}
+
+bool Instructions::retC(bool condition, int cycle) {
+    if(cycle == 1)
+    {
+        if(!condition)
+            return true;
+        else
+            return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->sp);
+        registers->sp++;
+        return false;
+    }
+    else if(cycle == 3)
+    {
+        readMemoryW = memory->read(registers->sp);
+        registers->sp++;
+        return false;
+    }
+
+    registers->pc = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+
+    readMemoryZ = 0;
+    readMemoryW = 0;
+    return true;
+}
+
+bool Instructions::retI(int cycle) {
+    if (cycle == 1)
+    {
+        readMemoryZ = memory->read(registers->sp);
+        registers->sp++;
+        return false;
+    }
+    else if (cycle == 2) 
+    {
+        readMemoryW = memory->read(registers->sp);
+        registers->sp++;
+        return false;
+    }
+    
     interrupt->enableIME();
-    uint8_t lsb = memory->read(registers->sp);
-    registers->sp++;
-    uint8_t msb = memory->read(registers->sp);
-    registers->sp++;
-    registers->pc = (static_cast<uint16_t>(msb) << 8) | lsb;
+    registers->pc = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+
+    readMemoryW = 0;
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::rst(uint16_t address) {
-    registers->sp--;
-    memory->write(registers->sp, (registers->pc >>8) & 0xFF);
-    registers->sp--;
+bool Instructions::rst(uint16_t address, int cycle) {
+    if(cycle == 1)
+    {
+        registers->sp--;
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        memory->write(registers->sp, (registers->pc >>8) & 0xFF);
+        registers->sp--;
+        return false;
+    }
+    
     memory->write(registers->sp, registers->pc & 0xFF);
     registers->pc = address;
+    return true;
 }
 
 // Load 8 bit
-void Instructions::loadRR8(uint8_t *dest, uint8_t *source) {
+bool Instructions::loadRR8(uint8_t *dest, uint8_t *source) {
     *dest = *source;
+
+    return true;
 }
 
-void Instructions::loadImR8(uint8_t *dest) {
+bool Instructions::loadImR8(uint8_t *dest) {
     *dest = readNext8Bit();
+    return true;
 }
 
-void Instructions::loadHlR(uint8_t *dest) {
+bool Instructions::loadHlR(uint8_t *dest) {
     *dest = memory->read(registers->hl);
+    return true;
 }
 
-void Instructions::loadRHl(uint8_t *source) {
+bool Instructions::loadRHl(uint8_t *source) {
     memory->write(registers->hl, *source);
+    return true;
 }
 
-void Instructions::loadImHl() {
-    memory->write(registers->hl, readNext8Bit());
+bool Instructions::loadImHl(int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+
+    memory->write(registers->hl, readMemoryZ);
+    return true;
 }
 
-void Instructions::loadRA(uint16_t *reg) {
+bool Instructions::loadRA(uint16_t *reg) {
     memory->write(*reg, registers->a);
+    return true;
 }
 
-void Instructions::loadAR(uint16_t *reg) {
+bool Instructions::loadAR(uint16_t *reg) {
     registers->a = memory->read(*reg);
+
+    return true;
 }
 
-void Instructions::loadImA() {
-    uint16_t address = readNext16Bit();
+bool Instructions::loadImA(int cycle) {
+    if(cycle == 1)
+    { 
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryW = readNext8Bit();
+        return false;
+    }
+    uint16_t address = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
     registers->a = memory->read(address);
+
+    readMemoryZ = 0;
+    readMemoryW = 0; 
+    return true;
 }
 
-void Instructions::loadAIm() {
-    uint16_t address = readNext16Bit();
+bool Instructions::loadAIm(int cycle) {
+    if(cycle == 1)
+    { 
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryW = readNext8Bit();
+        return false;
+    }    
+    uint16_t address = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
     memory->write(address, registers->a);
+
+    readMemoryW = 0;
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::loadHCA() {
+bool Instructions::loadHCA() {
     registers->a = memory->read(0xFF00 + registers->c);
+    return true;
 }
 
-void Instructions::loadAHC() {
+bool Instructions::loadAHC() {
     memory->write(0xFF00 + registers->c, registers->a);
+
+    return true;
 }
 
-void Instructions::loadAHIm() {
-    memory->write(0xFF00 + readNext8Bit(), registers->a);
+bool Instructions::loadAHIm(int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+
+    memory->write(0xFF00 + readMemoryZ, registers->a);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::loadHImA() {
-    uint8_t value = readNext8Bit();
-    registers->a = memory->read(0xFF00 + value);
+bool Instructions::loadHImA(int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+    registers->a = memory->read(0xFF00 + readMemoryZ);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::loadAHlMinus() {
+bool Instructions::loadAHlMinus() {
     memory->write(registers->hl, registers->a);
     registers->hl--;
+
+    return true;
 }
 
-void Instructions::loadHlMinusA() {
+bool Instructions::loadHlMinusA() {
     registers->a = memory->read(registers->hl);
     registers->hl--;
+
+    return true;
 }
 
-void Instructions::loadAHlPlus() {
+bool Instructions::loadAHlPlus() {
     memory->write(registers->hl, registers->a);
     registers->hl++;
+
+    return true;
 }
 
-void Instructions::loadHlPlusA() {
+bool Instructions::loadHlPlusA() {
     registers->a = memory->read(registers->hl);
     registers->hl++;
+
+    return true;
 }
 
 // Load 16 bit
-void Instructions::loadImR16(uint16_t *dest) {   
-    *dest = readNext16Bit();
+bool Instructions::loadImR16(uint16_t *dest, int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+
+    *dest = static_cast<uint16_t>(readNext8Bit() << 8) | readMemoryZ;
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::loadSpIm() {
-    uint16_t immediate = readNext16Bit();
-    memory->write(immediate, registers->sp & 0xFF);
+bool Instructions::loadSpIm(int cycle) {
+    
+    if(cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryW = readNext8Bit();
+        return false;
+    }
+    else if(cycle == 3)
+    {
+        uint16_t immediate = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+        memory->write(immediate, registers->sp & 0xFF);
+        return false;
+    }      
+
+    uint16_t immediate = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
     memory->write(immediate + 1, (registers->sp >> 8) & 0xFF);
+
+    readMemoryW = 0;
+    readMemoryZ = 0;
+    return true;
+
 }
 
-void Instructions::loadHlSp() {
+bool Instructions::loadHlSp() {
     registers->sp = registers->hl;
+
+    return true;
 }
 
-void Instructions::pushR(uint16_t *source) {
-    registers->sp--;
-    memory->write(registers->sp, (*source >> 8) & 0xFF);
-    registers->sp--;
+bool Instructions::pushR(uint16_t *source, int cycle) {
+    if (cycle == 1)
+    {
+        registers->sp--;
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        memory->write(registers->sp, (*source >> 8) & 0xFF);
+        registers->sp--;
+        return false;
+    }
+    
     memory->write(registers->sp, *source & 0xFF);
+    return true;
 }
 
-void Instructions::popR(uint16_t *dest) {
-    uint8_t lsb = memory->read(registers->sp);
+bool Instructions::popR(uint16_t *dest, int cycle) {
+    if(cycle == 1)
+    {
+        readMemoryZ = memory->read(registers->sp);
+        registers->sp++;
+        return false;
+    }
+
+    readMemoryW = memory->read(registers->sp);
     registers->sp++;
-    uint8_t msb = memory->read(registers->sp);
-    registers->sp++;
-    uint16_t res = (static_cast<uint16_t>(msb) <<8) | lsb;
-    *dest = res;
+    *dest = (static_cast<uint16_t>(readMemoryW) << 8) | readMemoryZ;
+
+    readMemoryZ = 0;
+    readMemoryW = 0;
+    return true;
 }
 
-void Instructions::loadSpEHl() {
-    uint16_t sp = registers->sp;
-    int8_t e = (int8_t) readNext8Bit();
-    uint16_t value = sp + e;
-    registers->hl = value;
+bool Instructions::loadSpEHl(int cycle) {
 
-    registers->setFlag(RegistersFlags::CARRY_FLAG, ((sp & 0xFF) + (uint8_t)e) > 0xFF);
-    registers->setFlag(RegistersFlags::ZERO_FLAG, false);
-    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
-    //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
-    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, ((sp & 0x0F) + (e & 0x0F)) > 0x0F);
+    if (cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        uint16_t sp = registers->sp;
+        int8_t e = (int8_t) readMemoryZ;
+
+        registers->setFlag(RegistersFlags::CARRY_FLAG, ((sp & 0xFF) + (uint8_t)e) > 0xFF);
+        registers->setFlag(RegistersFlags::ZERO_FLAG, false);
+        registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+        //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
+        registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, ((sp & 0x0F) + (e & 0x0F)) > 0x0F);
+    }
+    
+    registers->hl = registers->sp + static_cast<int8_t>(readMemoryZ);
+
+    readMemoryZ = 0;
+    return true;
+  
 }
 
 // Arithmetic and logical 8 bit
-void Instructions::addRA(uint8_t *reg) {
+bool Instructions::addRA(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result = a + *reg;
     registers->a = result;
@@ -2879,9 +2115,11 @@ void Instructions::addRA(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) + (*reg & 0xF) > 0xF);
+    
+    return true;
 }
 
-void Instructions::addImA(){
+bool Instructions::addImA(){
     uint8_t value = readNext8Bit();
     uint8_t a = registers->a;
     uint16_t result = a + value;
@@ -2893,9 +2131,10 @@ void Instructions::addImA(){
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) + (value & 0xF) > 0xF);
     
+    return true;
 }
 
-void Instructions::addHlA() {
+bool Instructions::addHlA() {
     uint8_t a = registers->a;
     uint8_t hlValue = memory->read(registers->hl);
     uint16_t result = a + hlValue;
@@ -2906,9 +2145,11 @@ void Instructions::addHlA() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) + (hlValue & 0xF) > 0xF);
+
+    return true;
 }
 
-void Instructions::adcRA(uint8_t *reg) {
+bool Instructions::adcRA(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result;
     uint8_t carry = registers->isFlagSet(RegistersFlags::CARRY_FLAG) ? 1 : 0;
@@ -2922,9 +2163,11 @@ void Instructions::adcRA(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) + (*reg & 0xF) + carry > 0xF);
+
+    return true;
 }
 
-void Instructions::adcHlA() {
+bool Instructions::adcHlA() {
     uint8_t a = registers->a;
     uint8_t hlValue = memory->read(registers->hl);
     uint16_t result;
@@ -2939,9 +2182,11 @@ void Instructions::adcHlA() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) + (hlValue & 0xF) + carry > 0xF);
+
+    return true;
 }
 
-void Instructions::adcImA() {
+bool Instructions::adcImA() {
     uint8_t a = registers->a;
     uint8_t value = readNext8Bit();
     uint16_t result;
@@ -2955,9 +2200,11 @@ void Instructions::adcImA() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) + (value & 0xF) + carry > 0xF);
+
+    return true;
 }
 
-void Instructions::subRA(uint8_t *reg) {
+bool Instructions::subRA(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result = a - *reg;
     registers->a = result;
@@ -2968,9 +2215,11 @@ void Instructions::subRA(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
     //resto per i primi 4 bit. controllo se i primi 4 bit del registro a cui sommo sono maggiori di A
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (*reg & 0xF));
+
+    return true;
 }
 
-void Instructions::subHlA() {
+bool Instructions::subHlA() {
     uint8_t a = registers->a;
     uint8_t hlValue = memory->read(registers->hl);
     uint16_t result = a - hlValue;
@@ -2982,9 +2231,11 @@ void Instructions::subHlA() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
     //resto per i primi 4 bit. controllo se i primi 4 bit del registro a cui sommo sono maggiori di A
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (hlValue & 0xF));
+
+    return true;
 }
 
-void Instructions::subImA() {
+bool Instructions::subImA() {
     uint8_t a = registers->a;
     uint8_t value = readNext8Bit();
     uint16_t result = a - value;
@@ -2996,9 +2247,11 @@ void Instructions::subImA() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
     //resto per i primi 4 bit. controllo se i primi 4 bit del registro a cui sommo sono maggiori di A
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (value & 0xF));
+
+    return true;
 }
 
-void Instructions::sbcRA(uint8_t *reg) {
+bool Instructions::sbcRA(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result;
     uint8_t carry = registers->isFlagSet(RegistersFlags::CARRY_FLAG) ? 1 : 0;
@@ -3013,9 +2266,10 @@ void Instructions::sbcRA(uint8_t *reg) {
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (*reg & 0xF) + carry);
     
+    return true;
 }
 
-void Instructions::sbcHlA() {
+bool Instructions::sbcHlA() {
     uint8_t a = registers->a;
     uint8_t hlValue = memory->read(registers->hl);
     uint16_t result;
@@ -3031,9 +2285,10 @@ void Instructions::sbcHlA() {
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (hlValue & 0xF) + carry);
     
+    return true;
 }
 
-void Instructions::sbcImA() {
+bool Instructions::sbcImA() {
     uint8_t a = registers->a;
     uint8_t value = readNext8Bit();
     uint16_t result;
@@ -3049,9 +2304,10 @@ void Instructions::sbcImA() {
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (value & 0xF) + carry);
     
+    return true;
 }
 
-void Instructions::cpAR(uint8_t *reg) {
+bool Instructions::cpAR(uint8_t *reg) {
     uint8_t a = registers->a;
     uint16_t result = a - *reg;
 
@@ -3062,9 +2318,11 @@ void Instructions::cpAR(uint8_t *reg) {
     
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (*reg & 0xF));
+
+    return true;
 }
 
-void Instructions::cpAHl() {
+bool Instructions::cpAHl() {
     uint8_t a = registers->a;
     uint8_t hlValue = memory->read(registers->hl);
     uint16_t result = a - hlValue;
@@ -3076,9 +2334,11 @@ void Instructions::cpAHl() {
     
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (hlValue & 0xF));
+
+    return true;
 }
 
-void Instructions::cpAIm() {
+bool Instructions::cpAIm() {
     uint8_t a = registers->a;
     uint8_t value = readNext8Bit();
     uint16_t result = a - value;
@@ -3089,9 +2349,11 @@ void Instructions::cpAIm() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (a & 0xF) < (value & 0xF));
+
+    return true;
 }
 
-void Instructions::incR8(uint8_t *reg) {
+bool Instructions::incR8(uint8_t *reg) {
     uint8_t oldRegValue = *reg;
     (*reg)++;
 
@@ -3101,33 +2363,51 @@ void Instructions::incR8(uint8_t *reg) {
     //resto per i primi 4 bit. Sommo a + registro nei primi 4 bit e se è > 1111 allora metto flag
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (oldRegValue & 0x0F) + 1 > 0x0F);
 
+    return true;
 }
 
-void Instructions::incHl() {
-    uint8_t value = memory->read(registers->hl);
-    uint8_t oldValue = value;
-    value++;
-    memory->write(registers->hl, value);
+bool Instructions::incHl(int cycle) {
+
+    if(cycle == 1)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+
+    uint8_t oldZ = readMemoryZ;
+    readMemoryZ++;
+    memory->write(registers->hl, readMemoryZ);
 
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
-    registers->setFlag(RegistersFlags::ZERO_FLAG, value == 0);
-    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (oldValue & 0x0F) + 1 > 0x0F);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, readMemoryZ == 0);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (oldZ & 0x0F) + 1 > 0x0F);
+
+    readMemoryZ = 0;
+    return true;
 
 }
 
-void Instructions::decHl() {
-    uint8_t value = memory->read(registers->hl);
-    uint8_t oldValue = value;
-    value--;
-    memory->write(registers->hl, value);
+bool Instructions::decHl(int cycle) {
+
+    if(cycle == 1)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+
+    uint8_t oldZ = readMemoryZ;
+    readMemoryZ--;
+    memory->write(registers->hl, readMemoryZ);
 
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
-    registers->setFlag(RegistersFlags::ZERO_FLAG, value == 0);
-    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (oldValue & 0x0F) == 0);
-
+    registers->setFlag(RegistersFlags::ZERO_FLAG, readMemoryZ == 0);
+    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (oldZ & 0x0F) == 0);
+    
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::decR8(uint8_t *reg) {
+bool Instructions::decR8(uint8_t *reg) {
     uint8_t oldRegValue = *reg;
     (*reg)--;
 
@@ -3137,9 +2417,10 @@ void Instructions::decR8(uint8_t *reg) {
     //half carry qui indica il prestito dal quarto bit. Il prestito avviene solo se i primi 4 bit sono a 0
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (oldRegValue & 0x0F) == 0);
 
+    return true;
 }
 
-void Instructions::andAR(uint8_t *reg) {
+bool Instructions::andAR(uint8_t *reg) {
     uint8_t a = registers->a & *reg;
     registers->a = a;
 
@@ -3147,9 +2428,11 @@ void Instructions::andAR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::andAHl() {
+bool Instructions::andAHl() {
     uint8_t res = registers->a & memory->read(registers->hl);
     registers->a = res;
 
@@ -3157,9 +2440,11 @@ void Instructions::andAHl() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::andAIm() {
+bool Instructions::andAIm() {
     uint8_t a = registers->a;
     uint8_t res = a & readNext8Bit();
     registers->a = res;
@@ -3168,9 +2453,11 @@ void Instructions::andAIm() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::orAR(uint8_t *reg) {
+bool Instructions::orAR(uint8_t *reg) {
     uint8_t res = registers->a | *reg;
     registers->a = res;
 
@@ -3179,9 +2466,10 @@ void Instructions::orAR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
 
+    return true;
 }
 
-void Instructions::orAHl() {
+bool Instructions::orAHl() {
     uint8_t res = registers->a | memory->read(registers->hl);
     registers->a = res;
 
@@ -3189,9 +2477,11 @@ void Instructions::orAHl() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+    
+    return true;
 }
 
-void Instructions::orAIm() {
+bool Instructions::orAIm() {
     uint8_t res = registers->a | readNext8Bit();
     registers->a = res;
 
@@ -3199,9 +2489,11 @@ void Instructions::orAIm() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::xorAR(uint8_t *reg) {
+bool Instructions::xorAR(uint8_t *reg) {
     uint8_t a = registers->a;
     uint8_t res = a ^ *reg;
     registers->a = res;
@@ -3210,9 +2502,11 @@ void Instructions::xorAR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::xorAHl() {
+bool Instructions::xorAHl() {
     uint8_t a = registers->a;
     uint8_t res = a ^ memory->read(registers->hl);
     registers->a = res;
@@ -3221,9 +2515,11 @@ void Instructions::xorAHl() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::xorAIm() {
+bool Instructions::xorAIm() {
     uint8_t a = registers->a;
     uint8_t res = a ^ readNext8Bit();
     registers->a = res;
@@ -3232,22 +2528,28 @@ void Instructions::xorAIm() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::ccf() {
+bool Instructions::ccf() {
     registers->setFlag(RegistersFlags::CARRY_FLAG, !registers->isFlagSet(RegistersFlags::CARRY_FLAG));
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::scf() {
+bool Instructions::scf() {
     registers->setFlag(RegistersFlags::CARRY_FLAG, true);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+
+    return true;
 }
 
 
-void Instructions::daA() { 
+bool Instructions::daA() { 
     uint8_t adj = 0; 
     if(registers->isFlagSet(RegistersFlags::SUBTRACTION_FLAG)){
         if(registers->isFlagSet(RegistersFlags::HALF_CARRY_FLAG)){
@@ -3270,24 +2572,30 @@ void Instructions::daA() {
 
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::ZERO_FLAG, registers->a == 0);
+
+    return true;
 }
 
-void Instructions::cpA() {
+bool Instructions::cpA() {
     registers->a = ~registers->a;
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, true);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+
+    return true;
 }
 
 // Arithmetic and logical 16 bit
-void Instructions::incR16(uint16_t *reg) {
+bool Instructions::incR16(uint16_t *reg, int cycle) {
     (*reg)++;
+    return true;
 }
 
-void Instructions::decR16(uint16_t *reg) {
+bool Instructions::decR16(uint16_t *reg, int cycle) {
     (*reg)--;
+    return true;
 }
 
-void Instructions::addHlR(uint16_t *reg) {
+bool Instructions::addHlR(uint16_t *reg) {
     uint16_t hl = registers->hl;
     uint32_t result = hl + *reg;
     registers->hl = result;
@@ -3296,24 +2604,40 @@ void Instructions::addHlR(uint16_t *reg) {
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, (hl & 0x0FFF) + (*reg & 0x0FFF) > 0x0FFF);
     registers->setFlag(RegistersFlags::CARRY_FLAG, result > 0xFFFF);
 
+    return true;
 }
 
-void Instructions::addSpE() {
-    uint16_t sp = registers->sp;
-    int8_t e = (int8_t) readNext8Bit();
-    uint16_t result = sp + e;
-    registers->sp = result;
+bool Instructions::addSpE(int cycle) {
 
-    registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, ((sp & 0x0F) + (e & 0x0F)) > 0x0F);
-    registers->setFlag(RegistersFlags::ZERO_FLAG, false);
-    registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
-    //overflow from bit 7
-    registers->setFlag(RegistersFlags::CARRY_FLAG, ((sp & 0xFF) + (uint8_t)e) > 0xFF);
+    if (cycle == 1)
+    {
+        readMemoryZ = readNext8Bit();
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        uint16_t sp = registers->sp;
+        int8_t e = (int8_t)readMemoryZ;
+        registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, 
+            ((sp & 0x0F) + (e & 0x0F)) > 0x0F);
+        registers->setFlag(RegistersFlags::ZERO_FLAG, false);
+        registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
+        //overflow from bit 7
+        registers->setFlag(RegistersFlags::CARRY_FLAG, 
+            ((sp & 0xFF) + (uint8_t)e) > 0xFF);
+        return false;
+    }
+    
+    registers->sp += static_cast<int8_t>(readMemoryZ);
+
+    readMemoryZ = 0;
+    return true;
+
 }
 
 // Bit operations
 
-void Instructions::rla() {
+bool Instructions::rla() {
     uint8_t a = registers->a;
     uint8_t msb = (a & 0x80) >> 7;
     
@@ -3323,9 +2647,11 @@ void Instructions::rla() {
     registers->setFlag(RegistersFlags::ZERO_FLAG, false);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::rra() {
+bool Instructions::rra() {
     uint8_t oldValue = registers->a;
     uint8_t lsb = oldValue & 0x01;
     registers->a = oldValue >> 1 | (registers->isFlagSet(RegistersFlags::CARRY_FLAG) << 7);
@@ -3334,9 +2660,11 @@ void Instructions::rra() {
     registers->setFlag(RegistersFlags::ZERO_FLAG, false);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::rlcR(uint8_t *reg) {
+bool Instructions::rlcR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t bit7 = (oldValue & 0x80) >> 7;
     *reg = oldValue << 1 | bit7;
@@ -3345,9 +2673,11 @@ void Instructions::rlcR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7==1);
+
+    return true;
 }
 
-void Instructions::rlca() {
+bool Instructions::rlca() {
     uint8_t oldValue = registers->a;
     uint8_t bit7 = (oldValue & 0x80) >> 7;
     registers->a = oldValue << 1 | bit7;
@@ -3356,21 +2686,35 @@ void Instructions::rlca() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7==1);
+
+    return true;
 }
 
-void Instructions::rlcHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t bit7 = (oldValue & 0x80) >> 7;
-    uint8_t result = oldValue << 1 | bit7;
+bool Instructions::rlcHl(int cycle) {
+    if(cycle == 1)
+    {
+        return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+
+    uint8_t bit7 = (readMemoryZ & 0x80) >> 7;
+    uint8_t result = readMemoryZ << 1 | bit7;
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7==1);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::rrcR(uint8_t *reg) {
+bool Instructions::rrcR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t lsb = oldValue & 0x01;
     *reg = oldValue >> 1 | (lsb << 7);
@@ -3379,9 +2723,11 @@ void Instructions::rrcR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb==1);
+
+    return true;
 }
 
-void Instructions::rrca() {
+bool Instructions::rrca() {
     uint8_t oldValue = registers->a;
     uint8_t lsb = oldValue & 0x01;
     registers->a = oldValue >> 1 | (lsb << 7);
@@ -3390,21 +2736,35 @@ void Instructions::rrca() {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb==1);
+
+    return true;
 }
 
-void Instructions::rrcHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t lsb = oldValue & 0x01;
-    uint8_t result = oldValue >> 1 | (lsb << 7);
+bool Instructions::rrcHl(int cycle) {
+    if(cycle == 1)
+    {
+        return false;
+    }
+    else if(cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+
+    uint8_t lsb = readMemoryZ & 0x01;
+    uint8_t result = readMemoryZ >> 1 | (lsb << 7);
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb==1);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::rlR(uint8_t *reg) {
+bool Instructions::rlR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t bit7 = (oldValue & 0x80) >> 7;
     uint8_t carry = registers->isFlagSet(RegistersFlags::CARRY_FLAG) ? 1 : 0;
@@ -3414,22 +2774,36 @@ void Instructions::rlR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7);
+
+    return true;
 }
 
-void Instructions::rlHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t bit7 = (oldValue & 0x80) >> 7;
+bool Instructions::rlHl(int cycle) {
+    if(cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+    
+    uint8_t bit7 = (readMemoryZ & 0x80) >> 7;
     uint8_t carry = registers->isFlagSet(RegistersFlags::CARRY_FLAG) ? 1 : 0;
-    uint8_t result = oldValue << 1 | carry;
+    uint8_t result = readMemoryZ<< 1 | carry;
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::rrR(uint8_t *reg) {
+bool Instructions::rrR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t lsb = oldValue & 0x01;
     uint8_t carry = registers->isFlagSet(RegistersFlags::CARRY_FLAG) ? 1 : 0;
@@ -3439,22 +2813,36 @@ void Instructions::rrR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb);
+
+    return true;
 }
 
-void Instructions::rrHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t lsb = oldValue & 0x01;
+bool Instructions::rrHl(int cycle) {
+    if(cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+    
+    uint8_t lsb = readMemoryZ & 0x01;
     uint8_t carry = registers->isFlagSet(RegistersFlags::CARRY_FLAG) ? 1 : 0;
-    uint8_t result = oldValue >> 1 | (carry << 7);
+    uint8_t result = readMemoryZ >> 1 | (carry << 7);
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::slaR(uint8_t *reg) {
+bool Instructions::slaR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t bit7 = (oldValue & 0x80) >> 7;
     *reg = oldValue << 1;
@@ -3463,21 +2851,34 @@ void Instructions::slaR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7);
+
+    return true;
 }
 
-void Instructions::slaHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t bit7 = (oldValue & 0x80) >> 7;
-    uint8_t result = oldValue << 1;
+bool Instructions::slaHl(int cycle) {
+    if (cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+    
+    uint8_t bit7 = (readMemoryZ & 0x80) >> 7;
+    uint8_t result = readMemoryZ << 1;
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, bit7);
+
+    return true;
 }
 
-void Instructions::sraR(uint8_t *reg) {
+bool Instructions::sraR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t lsb = oldValue & 0x01;
     uint8_t bit7 = (oldValue & 0x80);
@@ -3487,22 +2888,36 @@ void Instructions::sraR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb);
+
+    return true;
 }
 
-void Instructions::sraHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t lsb = oldValue & 0x01;
-    uint8_t bit7 = (oldValue & 0x80);
-    uint8_t result = (oldValue >> 1) | bit7;
+bool Instructions::sraHl(int cycle) {
+    if (cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+
+    uint8_t lsb = readMemoryZ & 0x01;
+    uint8_t bit7 = readMemoryZ & 0x80;
+    uint8_t result = (readMemoryZ >> 1) | bit7;
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::swapR(uint8_t *reg) {
+bool Instructions::swapR(uint8_t *reg) {
      uint8_t oldValue = *reg;
     *reg = (((oldValue & 0xF0) >> 4) | ((oldValue & 0x0F) << 4));
 
@@ -3510,20 +2925,34 @@ void Instructions::swapR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    return true;
 }
 
-void Instructions::swapHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t result = (((oldValue & 0xF0) >> 4) | ((oldValue & 0x0F) << 4));
+bool Instructions::swapHl(int cycle) {
+    if (cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+
+    uint8_t result = (((readMemoryZ & 0xF0) >> 4) | ((readMemoryZ & 0x0F) << 4));
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, false);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::srlR(uint8_t *reg) {
+bool Instructions::srlR(uint8_t *reg) {
     uint8_t oldValue = *reg;
     uint8_t lsb = oldValue & 0x01;
     *reg = oldValue >> 1;
@@ -3532,44 +2961,130 @@ void Instructions::srlR(uint8_t *reg) {
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb);
+
+    return true;
+
+    return true;
 }
 
-void Instructions::srlHl() {
-    uint8_t oldValue = memory->read(registers->hl);
-    uint8_t lsb = oldValue & 0x01;
-    uint8_t result = oldValue >> 1;
+bool Instructions::srlHl(int cycle) {
+    if (cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+
+    uint8_t lsb = readMemoryZ & 0x01;
+    uint8_t result = readMemoryZ >> 1;
     memory->write(registers->hl, result);
 
     registers->setFlag(RegistersFlags::ZERO_FLAG, result == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, false);
     registers->setFlag(RegistersFlags::CARRY_FLAG, lsb);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::bitBR(uint8_t bit, uint8_t *reg) {
+bool Instructions::bitBR(uint8_t bit, uint8_t *reg) {
     registers->setFlag(RegistersFlags::ZERO_FLAG, ((*reg) & (1 << bit)) == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+
+    return true;
 }
 
-void Instructions::bitBHl(uint8_t bit) {
-    registers->setFlag(RegistersFlags::ZERO_FLAG, ((memory->read(registers->hl)) & (1 << bit)) == 0);
+bool Instructions::bitBHl(uint8_t bit, int cycle) {
+    if(cycle == 1)
+    {
+        return false;
+    }
+
+    readMemoryZ = memory->read(registers->hl);
+    registers->setFlag(RegistersFlags::ZERO_FLAG, (readMemoryZ & (1 << bit)) == 0);
     registers->setFlag(RegistersFlags::SUBTRACTION_FLAG, false);
     registers->setFlag(RegistersFlags::HALF_CARRY_FLAG, true);
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::resBR(uint8_t bit, uint8_t *reg) {
+bool Instructions::resBR(uint8_t bit, uint8_t *reg) {
     *reg &= ~(1 << bit);
+    return true;
 }
 
-void Instructions::resBHl(uint8_t bit) {
-    memory->write(registers->hl, (memory->read(registers->hl) & ~(1 << bit)));
+bool Instructions::resBHl(uint8_t bit, int cycle) {
+    if(cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+    
+    memory->write(registers->hl, (readMemoryZ & ~(1 << bit)));
+
+    readMemoryZ = 0;
+    return true;
 }
 
-void Instructions::setBR(uint8_t bit, uint8_t *reg) {
+bool Instructions::setBR(uint8_t bit, uint8_t *reg) {
     *reg |= (1 << bit);
+
+    return true;
 }
 
-void Instructions::setBHl(uint8_t bit) {
-    memory->write(registers->hl, (memory->read(registers->hl) | (1 << bit)));
+bool Instructions::setBHl(uint8_t bit, int cycle) {
+    if (cycle == 1)
+    {
+        return false;
+    }
+    else if (cycle == 2)
+    {
+        readMemoryZ = memory->read(registers->hl);
+        return false;
+    }
+    
+    memory->write(registers->hl, (readMemoryZ | (1 << bit)));
+
+    readMemoryZ = 0;
+    return true;
+}
+
+//Grazie chatGPT non avevo voglia
+bool Instructions::isSingleMachineCycle(uint8_t opcode)
+{
+    static constexpr uint8_t machineCycles[256] = {
+        1,3,2,2,1,1,2,1,5,2,2,2,1,1,2,1,
+        0,3,2,2,1,1,2,1,3,2,2,2,1,1,2,1,
+        2,3,2,2,1,1,2,1,2,2,2,2,1,1,2,1,
+        2,3,2,2,3,3,3,1,2,2,2,2,1,1,2,1,
+        1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+        1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+        1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+        2,2,2,2,2,2,0,2,1,1,1,1,1,1,2,1,
+        1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+        1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+        1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+        1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+        2,3,3,4,3,4,2,4,2,4,3,0,3,6,2,4,
+        2,3,3,0,3,4,2,4,2,4,3,0,3,0,2,4,
+        3,3,2,0,0,4,2,4,4,1,4,0,0,0,2,4,
+        3,3,2,1,0,4,2,4,3,2,4,1,0,0,2,4
+    };
+
+    // HALT viene gestito subito dopo il fetch.
+    if (opcode == 0x76) {
+        return false;
+    }
+
+    return machineCycles[opcode] != 1;
 }

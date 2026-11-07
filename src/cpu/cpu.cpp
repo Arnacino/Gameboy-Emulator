@@ -17,35 +17,40 @@ CPU::CPU(Memory* memory, Registers* registers, Instructions* instructions, Inter
 }
 
 //mCycles!
-int CPU::executeCoreCycle(){
-    if(!interrupt->isHalted()){
-        uint8_t nextInstr = memory->read(registers->pc);
-        registers->pc++;
-        return instructions->execute(nextInstr);
-    } else {
-        if((memory->read(0xFF0F) & memory->read(0xFFFF) & 0x1F) != 0){
-            interrupt->setHalted(false);
-        }
-        return 1;
+void CPU::executeInstructionCycle(){
+
+    bool finished = instructions->execute(currentOpcode, instructionCycle);
+
+    if(finished)
+    {  
+        instructionRunning = false;
+        instructionCycle = 0;
+    }
+    else
+    {
+        instructionCycle++;
     }
 }
 
-int CPU::handleInterrupt(){
 
-    if(!interrupt->isIMEset()){
-        return 0;
-    }
-    
+bool CPU::interruptCanBeAccepted()
+{
+    uint8_t pending =
+        memory->read(0xFF0F) &
+        memory->read(0xFFFF) &
+        0x1F;
+
+    return interrupt->isIMEset() && pending != 0;
+}
+
+void CPU::executeInterruptCycle(){
+
     uint8_t bit = 0;
     uint16_t address = 0;
     
     uint8_t ifRegister = memory->read(0xFF0F); 
     uint8_t ieRegister = memory->read(0xFFFF); 
     uint8_t pending = (ifRegister & ieRegister) & 0x1F;
-    
-    if(pending == 0){
-        return 0;
-    }
     
     if(pending & 0x1){
         bit = 0xFE;
@@ -63,17 +68,18 @@ int CPU::handleInterrupt(){
         bit = 0xEF;
         address = 0x60;              
     }else{
-        return 0;
+        return;
     }
 
     memory->write(0xFF0F, memory->read(0xFF0F) & bit);
     interrupt->disableIME(); 
     interrupt->setHalted(false);
-    instructions->rst(address);
-    return 5;
+    // instructions->rst(address);
+    return;
 }
 
-void CPU::handleTima(int cycles){
+void CPU::tickTima(int cycles)
+{
     uint8_t tac = memory->read(0xFF07);
     if((tac & 0x04) == 0){
         return;
@@ -88,7 +94,7 @@ void CPU::handleTima(int cycles){
         period = 64;
     }else if((tac & 0x01) == 0x01){
         period = 16;
-    }else if((tac & 0x00) == 0){
+    }else if ((tac & 0x03) == 0){
         period = 1024;
     }
 
@@ -110,33 +116,70 @@ void CPU::handleTima(int cycles){
     
 }
 
-void CPU::handleDiv(int cycles){
+void CPU::tickDiv(int cycles)
+{
     //tCycles
     memory->tickDiv(cycles*4);
 }
 
-
-int CPU::step(){
-    int cycles = 0;
-    
-    if(!running){
-        return 0;
-    }
-
-    cycles = executeCoreCycle();
-    cycles += handleInterrupt();
-
-    interrupt->updateIME();
-    
-    handleTima(cycles);
-    handleDiv(cycles);
-    if(memory->isDMAActive()){
+void CPU::tickDma(int cycles)
+{
+    if(memory->isDMAActive())
+    {
         memory->DMATransfer(cycles);
     }
+}
+
+/*
+    Il fetch dell'opcode principale è il primo M-cycle.
+    Per le istruzioni più lunghe, instructionCycle indica i cicli
+    successivi al fetch: cycle 1 corrisponde quindi a M2.
+*/
+void CPU::fetchInstruction()
+{
+    uint16_t opcodeAddress = registers->pc;
+    currentOpcode = memory->read(registers->pc);
+    ++registers->pc;
+    
+    instructionCycle = 1;
+
+    if (!instructions->isSingleMachineCycle(currentOpcode))
+    {
+        instructions->execute(currentOpcode, instructionCycle);
+        instructionRunning = false;
+    } 
+    else 
+    {
+        instructionRunning = true;
+    }
+}
+
+void CPU::step()
+{
+    if (!running)
+        return;
+
+    if (interruptRunning) {
+        executeInterruptCycle();
+    }
+    else if (instructionRunning) {
+        executeInstructionCycle();
+    }
+    // else if (interrupt->isHalted()) {
+    //     executeHaltCycle();
+    // }
+    // else if (interruptCanBeAccepted()) {
+    //     startInterrupt();
+    // }
+    else {
+        fetchInstruction();
+    }
+
+    tickTima(1);
+    tickDiv(1);
+    tickDma(1);
 
     debugPrints();
-
-    return cycles;
 }
 
 
