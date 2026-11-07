@@ -24,6 +24,7 @@ add_library(emulator_lib
     src/joypad/joypad.cpp
     src/ppu/ppu.cpp
     src/display/sdldisplay.cpp
+    src/rom/rom_selector.cpp
 )
 
 target_include_directories(emulator_lib
