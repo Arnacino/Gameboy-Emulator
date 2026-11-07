@@ -21,7 +21,7 @@ int main(int, char**) {
     SDLDisplay display(&joypad);
     Memory memory(filepath.c_str(), &joypad);
     Registers registers;
-    Interrupt interrupt;
+    Interrupt interrupt(&memory, &registers);
     Instructions instructions(&registers, &memory, &interrupt);
     CPU cpu(&memory, &registers, &instructions, &interrupt);
     PPU ppu(&memory);

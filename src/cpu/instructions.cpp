@@ -1589,7 +1589,7 @@ bool Instructions::halt()
     }
     else if((memory->read(0xFF0F) & memory->read(0xFFFF)) != 0)
     {
-        registers->pc--;
+        haltBug = true;
     }
 
     return true;

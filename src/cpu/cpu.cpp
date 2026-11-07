@@ -25,6 +25,8 @@ void CPU::executeInstructionCycle(){
     {  
         instructionRunning = false;
         instructionCycle = 0;
+
+        interrupt->updateIME();
     }
     else
     {
@@ -43,40 +45,7 @@ bool CPU::interruptCanBeAccepted()
     return interrupt->isIMEset() && pending != 0;
 }
 
-void CPU::executeInterruptCycle(){
 
-    uint8_t bit = 0;
-    uint16_t address = 0;
-    
-    uint8_t ifRegister = memory->read(0xFF0F); 
-    uint8_t ieRegister = memory->read(0xFFFF); 
-    uint8_t pending = (ifRegister & ieRegister) & 0x1F;
-    
-    if(pending & 0x1){
-        bit = 0xFE;
-        address = 0x40;
-    }else if(pending & 0x2){
-        bit = 0xFD;
-        address = 0x48;
-    }else if(pending & 0x4){
-        bit = 0xFB;
-        address = 0x50;
-    }else if(pending & 0x8){
-        bit = 0xF7;
-        address = 0x58;          
-    }else if(pending & 0x10){
-        bit = 0xEF;
-        address = 0x60;              
-    }else{
-        return;
-    }
-
-    memory->write(0xFF0F, memory->read(0xFF0F) & bit);
-    interrupt->disableIME(); 
-    interrupt->setHalted(false);
-    // instructions->rst(address);
-    return;
-}
 
 void CPU::tickTima(int cycles)
 {
@@ -137,9 +106,16 @@ void CPU::tickDma(int cycles)
 */
 void CPU::fetchInstruction()
 {
-    uint16_t opcodeAddress = registers->pc;
     currentOpcode = memory->read(registers->pc);
-    ++registers->pc;
+    
+    if(instructions->isHaltBugged())
+    {
+        instructions->setHaltBug(false);
+    }
+    else
+    {
+        ++registers->pc;
+    }
     
     instructionCycle = 1;
 
@@ -147,10 +123,31 @@ void CPU::fetchInstruction()
     {
         instructions->execute(currentOpcode, instructionCycle);
         instructionRunning = false;
+
+        if (currentOpcode != 0xFB) {
+            interrupt->updateIME();
+        }   
     } 
     else 
     {
         instructionRunning = true;
+    }
+}
+
+void CPU::executeHaltCycle()
+{
+    bool pending = (memory->read(0xFF0F) & memory->read(0xFFFF)) != 0;
+    
+    if(!pending)
+    {
+        return;
+    }
+
+    interrupt->setHalted(false);
+
+    if(interrupt->isIMEset())
+    {
+        interrupt->startInterrupt();
     }
 }
 
@@ -159,19 +156,24 @@ void CPU::step()
     if (!running)
         return;
 
-    if (interruptRunning) {
-        executeInterruptCycle();
+    if (interrupt->getInterruptPhase() != Interrupt::Phase::None) 
+    {
+        interrupt->cycle();
     }
-    else if (instructionRunning) {
+    else if (instructionRunning) 
+    {
         executeInstructionCycle();
     }
-    // else if (interrupt->isHalted()) {
-    //     executeHaltCycle();
-    // }
-    // else if (interruptCanBeAccepted()) {
-    //     startInterrupt();
-    // }
-    else {
+    else if (interrupt->isHalted()) 
+    {
+         executeHaltCycle();
+    }
+    else if (interruptCanBeAccepted()) 
+    {
+        interrupt->startInterrupt();
+    }
+    else 
+    {
         fetchInstruction();
     }
 

@@ -16,7 +16,6 @@ class CPU {
         void executeInstructionCycle();
         void executeInterruptCycle();
         void executeHaltCycle();
-        void startInterrupt();
         bool interruptCanBeAccepted();
         void fetchInstruction();
         void tickTima(int cycles);
@@ -26,7 +25,6 @@ class CPU {
         void debugPrints();
 
         bool running = false;
-        bool interruptRunning = false;
         bool instructionRunning = false;
         int timaCounter = 0;
         int instructionCycle = 0;

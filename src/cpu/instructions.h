@@ -20,6 +20,8 @@ private:
 
     uint8_t cbOpcode = 0;
 
+    bool haltBug = false;
+
     bool halt();
     bool stop();
     bool di(); //disable interrupts
@@ -136,9 +138,18 @@ private:
 public:
     Instructions(Registers *registers, Memory *memory, Interrupt *interrupt);
 
-
     bool execute(uint8_t opcode, int instructionCycle);
     bool isSingleMachineCycle(uint8_t opcode);
+    
+    bool isHaltBugged()
+    {
+        return haltBug;
+    }
+
+    void setHaltBug(bool cond)
+    {
+        haltBug = cond;
+    }
 };
 
 #endif

@@ -19,6 +19,7 @@ FetchContent_MakeAvailable(SDL2)
 add_library(emulator_lib
     src/cpu/cpu.cpp
     src/cpu/instructions.cpp
+    src/cpu/interrupt.cpp
     src/memory/memory.cpp
     src/memory/registers.cpp
     src/joypad/joypad.cpp
