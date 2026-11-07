@@ -136,9 +136,9 @@ void CPU::fetchInstruction()
 
 void CPU::executeHaltCycle()
 {
-    bool pending = (memory->read(0xFF0F) & memory->read(0xFFFF)) != 0;
+    const uint8_t pending = (memory->read(0xFF0F) & memory->read(0xFFFF)) & 0x1F;
     
-    if(!pending)
+    if(pending == 0)
     {
         return;
     }

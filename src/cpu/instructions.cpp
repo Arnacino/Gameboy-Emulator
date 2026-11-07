@@ -1579,15 +1579,17 @@ bool Instructions::execute(uint8_t instruction, int instructionCycle){
 // Basic Instructions
 bool Instructions::halt()
 { 
+    const uint8_t pending = memory->read(0xFF0F) & memory->read(0xFFFF) & 0x1F;
+
     if(interrupt->isIMEset())
     {
         interrupt->setHalted(true);
     }
-    else if((memory->read(0xFF0F) & memory->read(0xFFFF)) == 0)
+    else if(pending == 0)
     {
         interrupt->setHalted(true);
     }
-    else if((memory->read(0xFF0F) & memory->read(0xFFFF)) != 0)
+    else if(pending != 0)
     {
         haltBug = true;
     }

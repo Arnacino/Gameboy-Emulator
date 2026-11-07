@@ -83,6 +83,8 @@ uint8_t Memory::readRaw(uint16_t address){
         return oam[address%0x100];
     if(address == 0xFF00)
         return joypad->readP1(IORegisters[0x00]);
+    if (address == 0xFF0F)
+        return static_cast<uint8_t>(IORegisters[0x0F] | 0xE0);
     if(address >= 0xFF00 && address <= 0xFF7F)
         return IORegisters[address%0x100];
     if(address >= 0xFF80 && address <= 0xFFFE)
@@ -128,6 +130,8 @@ void Memory::writeRaw(uint16_t address, uint8_t value){
         }else if(address == 0xFF04){
             IORegisters[address%0x100] = 0;
             divCounter = 0;
+        }else if (address == 0xFF0F) {
+            IORegisters[0x0F] = value & 0x1F;
         }else if(address == 0xFF45 || address == 0xFF44){
             IORegisters[address%0x100] = value;
             LYCCompare();

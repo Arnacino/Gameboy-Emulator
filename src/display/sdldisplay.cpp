@@ -85,6 +85,9 @@ bool SDLDisplay::processEvents() {
                     case SDLK_x:
                         joypad->setKey(JoypadKey::B, false);
                         break;
+                    case SDLK_RETURN:
+                    case SDLK_KP_ENTER:
+                    case SDLK_SPACE:
                     case SDLK_TAB:
                         joypad->setKey(JoypadKey::Start, false);
                         break;
@@ -119,6 +122,9 @@ bool SDLDisplay::processEvents() {
                     case SDLK_x:
                         joypad->setKey(JoypadKey::B, true);
                         break;
+                    case SDLK_RETURN:
+                    case SDLK_KP_ENTER:
+                    case SDLK_SPACE:                    
                     case SDLK_TAB:
                         joypad->setKey(JoypadKey::Start, true);
                         break;

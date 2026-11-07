@@ -38,18 +38,15 @@ int main(int, char**) {
     using clock = std::chrono::steady_clock;
     const auto frameDuration = std::chrono::microseconds(16742);
     auto nextFrame = clock::now();
-    int cycles = 0;
 
     while (shouldRun) {
         nextFrame += frameDuration;
 
-        int frameCycles = 0;
-        while (frameCycles < FRAMETIME) {
-            // TODO capire qua come gestire i cicli con gli interrupt
+        int frameMCycles = 0;
+        while (frameMCycles < FRAMETIME) {
             cpu.step();
-            frameCycles += 4;
+            ++frameMCycles;
             ppu.update(4);
-            ++cycles;
         }
         display.setFrameBuffer(ppu.getFrameBuffer());
         shouldRun = display.loop();
